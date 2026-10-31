@@ -40,6 +40,7 @@ from .protocol import (
     build_read,
     decode,
     decode_threshold,
+    write_accepted,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -150,7 +151,7 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if self._device_info_set or "model" not in data:
             return
         registry = dr.async_get(self.hass)
-        if device := registry.async_get_device(identifiers={(DOMAIN, self.address)}):
+        if device := registry.async_get_device_by_identifier((DOMAIN, self.address)):
             registry.async_update_device(device.id, model=data.get("model"), serial_number=data.get("serial"))
             self._device_info_set = True
 
@@ -175,20 +176,27 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     # --- control ------------------------------------------------------------
 
     async def async_control(self, slot: int, on: bool, refresh: bool = True) -> None:
-        """Send a Control (0x3C) command, then refresh state."""
+        """Send a Control (0x3C) command, check the ack, then refresh state."""
+        frame = build_control(slot, on)
         async with self._lock:
             try:
                 client = await self._ensure_connected()
-                if await self._transact(client, CMD_CONTROL, build_control(slot, on)) is None:
-                    _LOGGER.warning("%s: no ack for control slot %s", self.address, slot)
+                ack = await self._transact(client, CMD_CONTROL, frame)
             except (BleakError, TimeoutError, UpdateFailed) as err:
                 await self.async_disconnect()
                 raise HomeAssistantError(f"Battery not reachable: {err}") from err
             finally:
                 await self._release()
+        flag = self._parser.flags.get(CMD_CONTROL)
+        _LOGGER.debug("%s control TX %s -> ack flag=%s payload=%s", self.address, frame.hex(), flag, ack and ack.hex())
+        if ack is None:
+            raise HomeAssistantError("The battery did not answer the command")
+        if not write_accepted(flag, ack):
+            _LOGGER.warning("%s rejected control %s (flag=%s payload=%s)", self.address, frame.hex(), flag, ack.hex())
+            raise HomeAssistantError(f"The BMS rejected the command (flag={flag}, reply={ack.hex()})")
         if refresh:
             await asyncio.sleep(1)
-            await self.async_request_refresh()
+            await self.async_refresh()
 
     async def async_disconnect(self) -> None:
         client, self._client = self._client, None

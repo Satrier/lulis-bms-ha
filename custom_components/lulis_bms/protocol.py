@@ -119,6 +119,7 @@ class FrameParser:
 
     def __init__(self) -> None:
         self._buf = bytearray()
+        self.flags: dict[int, int] = {}  # cmd -> header flag byte of the last frame
 
     def feed(self, data: bytes) -> list[tuple[int, bytes]]:
         out: list[tuple[int, bytes]] = []
@@ -138,7 +139,13 @@ class FrameParser:
             frame = bytes(self._buf[:total])
             del self._buf[:total]
             if _sum8(frame[:-1]) == frame[-1]:
+                self.flags[frame[4]] = frame[3]
                 out.append((frame[4], frame[6:-1]))
+
+
+def write_accepted(flag: int | None, payload: bytes) -> bool:
+    """The app treats a write as successful when the flag and the last data byte are both 00."""
+    return flag == 0 and (not payload or payload[-1] == 0)
 
 
 def _bits(word: int, names: tuple[str, ...]) -> list[str]:

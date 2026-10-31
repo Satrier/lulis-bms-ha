@@ -94,3 +94,16 @@ def test_threshold_decode() -> None:
     assert t["values"] == [3.65, 3.4, 3.6]
     assert t["delays_ms"] == [1000, 2000, 3000]
     assert t["enable"] == 1
+
+
+def test_write_ack() -> None:
+    parser = protocol.FrameParser()
+    ok = bytes.fromhex("3b7e01003c0100")
+    ok += bytes([sum(ok) & 0xFF])
+    [(cmd, payload)] = parser.feed(ok)
+    assert cmd == 0x3C and protocol.write_accepted(parser.flags[cmd], payload)
+
+    bad = bytes.fromhex("3b7e01013c0101")
+    bad += bytes([sum(bad) & 0xFF])
+    [(cmd, payload)] = parser.feed(bad)
+    assert not protocol.write_accepted(parser.flags[cmd], payload)

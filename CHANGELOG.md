@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Charging / Discharging switches now check the BMS reply. If the BMS rejects the command, or accepts it but keeps the MOS state, an error is shown in the UI and the reply is logged, instead of the switch silently flipping back.
+- Use `async_get_device_by_identifier` (the old device registry call is deprecated in HA 2026.x).
+
 ## 0.2.0
 
 - **Options**: keep connected vs connect-per-poll (frees the BMS for the phone app between polls), polling interval 10–300 s, invert current.

@@ -6,6 +6,7 @@ from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import LulisConfigEntry
@@ -31,10 +32,17 @@ class LulisMosSwitch(LulisEntity, SwitchEntity):
         return (self.coordinator.data or {}).get(self._key)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await self.coordinator.async_control(self._slot, True)
+        await self._set(True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self.coordinator.async_control(self._slot, False)
+        await self._set(False)
+
+    async def _set(self, on: bool) -> None:
+        await self.coordinator.async_control(self._slot, on)
+        state = (self.coordinator.data or {}).get(self._key)
+        if state is not None and state != on:
+            # BMS acknowledged but kept the MOS state (e.g. its own protection logic)
+            raise HomeAssistantError(f"The BMS accepted the command but the MOS is still {'on' if state else 'off'}")
 
 
 async def async_setup_entry(
