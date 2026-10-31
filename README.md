@@ -26,6 +26,11 @@ These batteries use a BMS with an **LK86xx (Telink) Bluetooth module** (BLE name
 Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lulis-bms-ha/releases/latest), extract it to `<config>/custom_components/lulis_bms/` and restart Home Assistant.
 </details>
 
+## Links
+
+- 🏭 Manufacturer: [LULIS Battery](https://www.lulisbattery.com) (Zhejiang Tieying Power Energy Co., Ltd.). The [service page](https://www.lulisbattery.com/service) has the user manual and warranty.
+- 📱 Official phone app *LULIS BATTERY* (Android APK, from the QR code on the manufacturer's service page): <https://www.pgyer.com/lulisbattery>
+
 ## Features
 
 - 🔍 **Auto-discovery** of `LK86*` batteries, set up in one click
