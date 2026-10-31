@@ -3,7 +3,7 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![GitHub Release](https://img.shields.io/github/v/release/Satrier/lulis-bms-ha)](https://github.com/Satrier/lulis-bms-ha/releases)
 [![Validate](https://github.com/Satrier/lulis-bms-ha/actions/workflows/validate.yml/badge.svg)](https://github.com/Satrier/lulis-bms-ha/actions/workflows/validate.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/Satrier/lulis-bms-ha)](https://github.com/Satrier/lulis-bms-ha/blob/main/LICENSE)
 
 Monitor and control **LULIS lithium batteries** (e-motorcycle, golf cart and energy storage packs) from Home Assistant over Bluetooth. You don't need the phone app, the cloud or any extra hardware.
 
