@@ -10,6 +10,10 @@ Monitor and control **LULIS lithium batteries** (e-motorcycle, golf cart and ene
 
 These batteries use a BMS with an **LK86xx (Telink) Bluetooth module** (BLE name `LK86xx-XXXXXX`), the same one the *LULIS BATTERY* app talks to. The integration uses Home Assistant's own Bluetooth stack, so it works with local adapters and with [ESPHome Bluetooth proxies](https://esphome.io/projects/?type=bluetooth).
 
+<p align="center">
+  <img src="docs/images/device_page.png" alt="LULIS battery device page in Home Assistant" width="560">
+</p>
+
 ## Install
 
 > Requires **Home Assistant 2026.10** or newer.
@@ -56,6 +60,13 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 | Battery | BMS | BLE name | Status |
 |---|---|---|---|
 | LULIS 72V 40Ah LiFePO4 (24S) | `LR359V13_N031x60A` | `LK8625-…` | ✅ tested |
+
+<p>
+  <img src="docs/images/battery_label.png" alt="LULIS 72V40Ah LiFePO4 battery label" height="320">
+  <img src="docs/images/lulis_app.png" alt="Official LULIS BATTERY app, Real-time tab" height="320">
+</p>
+
+*Left: label of the tested pack. Right: the official LULIS BATTERY app showing the same BMS (`LK8625-…`, `LR359V13_N031x60A`).*
 
 Other LULIS packs with an `LK86xx` module will most likely work. If yours does too (or doesn't), please [open an issue](https://github.com/Satrier/lulis-bms-ha/issues/new/choose).
 
