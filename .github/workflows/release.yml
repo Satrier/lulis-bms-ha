@@ -1,0 +1,33 @@
+name: Release
+
+# Push a tag like v0.2.0 → manifest version is set from the tag,
+# lulis_bms.zip is built and a GitHub Release is published for HACS.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          jq --arg v "$VERSION" '.version = $v' custom_components/lulis_bms/manifest.json > m.json
+          mv m.json custom_components/lulis_bms/manifest.json
+
+      - name: Build zip
+        run: |
+          cd custom_components/lulis_bms
+          zip -r "$GITHUB_WORKSPACE/lulis_bms.zip" . -x '__pycache__/*'
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: lulis_bms.zip
+          generate_release_notes: true

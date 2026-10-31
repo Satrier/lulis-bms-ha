@@ -1,0 +1,21 @@
+[project]
+name = "lulis-bms-ha"
+version = "0.0.0"
+description = "Home Assistant integration for LULIS batteries (LK86xx BLE BMS)"
+requires-python = ">=3.13"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = ["custom_components"]
+combine-as-imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

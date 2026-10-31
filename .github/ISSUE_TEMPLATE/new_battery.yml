@@ -1,0 +1,23 @@
+name: Unsupported battery / new model
+description: My LULIS (or other LK86xx) battery is not discovered or shows wrong values
+labels: [new-device]
+body:
+  - type: input
+    id: ble_name
+    attributes:
+      label: Bluetooth name
+      description: From Settings → Bluetooth → advertisement monitor (e.g. LK8625-C4A386)
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Battery label (voltage / capacity / chemistry)
+  - type: textarea
+    id: app
+    attributes:
+      label: Screenshot of the LULIS BATTERY app (Real-time tab)
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics file (if the integration connects)

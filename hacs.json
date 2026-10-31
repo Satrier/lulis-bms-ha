@@ -1,5 +1,7 @@
 {
   "name": "LULIS Battery BMS",
-  "homeassistant": "2025.1.0",
-  "render_readme": true
+  "homeassistant": "2025.3.0",
+  "render_readme": true,
+  "zip_release": true,
+  "filename": "lulis_bms.zip"
 }

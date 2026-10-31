@@ -6,32 +6,25 @@ from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import LulisConfigEntry
-from .const import DOMAIN
 from .coordinator import LulisCoordinator
+from .entity import LulisEntity
 from .protocol import CTL_CHARGE, CTL_DISCHARGE
 
-SWITCHES = (
-    ("charge_mos", "Charging", CTL_CHARGE, "mdi:battery-charging"),
-    ("discharge_mos", "Discharging", CTL_DISCHARGE, "mdi:battery-arrow-down"),
+SWITCHES: tuple[tuple[str, int], ...] = (
+    ("charge_mos", CTL_CHARGE),
+    ("discharge_mos", CTL_DISCHARGE),
 )
 
 
-class LulisMosSwitch(CoordinatorEntity[LulisCoordinator], SwitchEntity):
-    _attr_has_entity_name = True
-
-    def __init__(self, coordinator: LulisCoordinator, key: str, name: str, slot: int, icon: str) -> None:
-        super().__init__(coordinator)
+class LulisMosSwitch(LulisEntity, SwitchEntity):
+    def __init__(self, coordinator: LulisCoordinator, key: str, slot: int) -> None:
+        super().__init__(coordinator, key)
         self._key = key
         self._slot = slot
-        self._attr_name = name
-        self._attr_icon = icon
-        self._attr_unique_id = f"{coordinator.address}_{key}"
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, coordinator.address)})
+        self._attr_translation_key = key
 
     @property
     def is_on(self) -> bool | None:
@@ -45,7 +38,8 @@ class LulisMosSwitch(CoordinatorEntity[LulisCoordinator], SwitchEntity):
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: LulisConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: LulisConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    c = entry.runtime_data
-    async_add_entities(LulisMosSwitch(c, *s) for s in SWITCHES)
+    async_add_entities(LulisMosSwitch(entry.runtime_data, key, slot) for key, slot in SWITCHES)

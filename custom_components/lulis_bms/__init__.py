@@ -8,14 +8,15 @@ from homeassistant.core import HomeAssistant
 
 from .coordinator import LulisCoordinator
 
-PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH]
 
 type LulisConfigEntry = ConfigEntry[LulisCoordinator]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: LulisConfigEntry) -> bool:
     coordinator = LulisCoordinator(hass, entry)
-    # Weak BLE links fail often; don't block setup, entities go unavailable instead.
+    # BLE links to batteries are often weak: don't block setup on the first poll,
+    # entities simply stay unavailable until the battery answers.
     await coordinator.async_refresh()
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -23,7 +24,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: LulisConfigEntry) -> boo
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: LulisConfigEntry) -> bool:
-    ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if ok:
+    if unloaded := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         await entry.runtime_data.async_disconnect()
-    return ok
+    return unloaded

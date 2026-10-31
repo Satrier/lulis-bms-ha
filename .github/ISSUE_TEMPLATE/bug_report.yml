@@ -1,0 +1,46 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.10.4"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: battery
+    attributes:
+      label: Battery / BMS model
+      description: Model from the device page or the LULIS BATTERY app (e.g. 72V40Ah, LR359V13_N031x60A)
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Settings → Devices → LULIS Battery → ⋮ → Download diagnostics. Paste or attach the file.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Enable debug logging in configuration.yaml:
+        ```yaml
+        logger:
+          logs:
+            custom_components.lulis_bms: debug
+        ```
+      render: text

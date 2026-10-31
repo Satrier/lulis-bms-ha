@@ -1,32 +1,75 @@
 # LULIS Battery BMS for Home Assistant
 
-A Home Assistant integration for LULIS lithium batteries. These batteries use a BMS with an **LK86xx (Telink) Bluetooth module**, which the phone app *LULIS BATTERY* talks to. The integration connects over BLE through Home Assistant's own Bluetooth stack, so it works with local adapters and with ESPHome Bluetooth proxies.
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![GitHub Release](https://img.shields.io/github/v/release/Satrier/lulis-bms-ha)](https://github.com/Satrier/lulis-bms-ha/releases)
+[![Validate](https://github.com/Satrier/lulis-bms-ha/actions/workflows/validate.yml/badge.svg)](https://github.com/Satrier/lulis-bms-ha/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Tested with a 72V 40Ah LiFePO4 pack (24S): BMS model `LR359V13_N031x60A`, BLE name `LK8625-XXXXXX`.
+Monitor and control **LULIS lithium batteries** (e-motorcycle, golf cart and energy storage packs) from Home Assistant over Bluetooth. You don't need the phone app, the cloud or any extra hardware.
+
+These batteries use a BMS with an **LK86xx (Telink) Bluetooth module** (BLE name `LK86xx-XXXXXX`), the same one the *LULIS BATTERY* app talks to. The integration uses Home Assistant's own Bluetooth stack, so it works with local adapters and with [ESPHome Bluetooth proxies](https://esphome.io/projects/?type=bluetooth).
+
+## Install
+
+[![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Satrier&repository=lulis-bms-ha&category=integration)
+
+1. Click the button above, or in **HACS → ⋮ → Custom repositories** add `https://github.com/Satrier/lulis-bms-ha` with the category **Integration**.
+2. **Download** LULIS Battery BMS and restart Home Assistant.
+3. Close the LULIS BATTERY app on your phone. The BMS accepts only one Bluetooth connection.
+4. The battery appears under **Settings → Devices & services → Discovered**. Click **Add**. If it doesn't appear:
+
+[![Open your Home Assistant instance and start setting up LULIS Battery BMS.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=lulis_bms)
+
+<details>
+<summary>Manual install</summary>
+
+Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lulis-bms-ha/releases/latest), extract it to `<config>/custom_components/lulis_bms/` and restart Home Assistant.
+</details>
 
 ## Features
 
-- Auto-discovery of `LK86*` devices
-- Sensors: pack voltage, current, power, SOC, SOH, remaining capacity, min/max/delta cell voltage, every cell voltage, temperatures (T1, T2, MOS), cycle count, design capacity, raw status flags
-- Switches: **Charging** (charge MOS) and **Discharging** (discharge MOS)
+- 🔍 **Auto-discovery** of `LK86*` batteries, set up in one click
+- 🔋 **Pack**: voltage, current, power, state of charge, remaining Ah
+- 🧮 **Cells**: voltage of every cell, plus min, max and delta
+- 🌡️ **Temperatures**: T1, T2 and MOS
+- ⚡ **Energy dashboard**: *Energy charged* / *Energy discharged* in kWh, kept across restarts
+- 🎛️ **Control**: *Charging* and *Discharging* switches (charge/discharge MOS)
+- 🩺 **Health**: state of health, cycles, design capacity, raw status flags
+- 🧾 **Diagnostics** download with raw BMS frames, for bug reports
+- 🌍 English and Ukrainian translations
 
 > ⚠️ Turning **Discharging** off cuts power to the load immediately.
 
-## Installation
+## Supported batteries
 
-### HACS (custom repository)
-1. In HACS, open the ⋮ menu, choose **Custom repositories**, add this repository's URL and pick the **Integration** category.
-2. Install **LULIS Battery BMS**, then restart Home Assistant.
-3. The battery shows up under **Settings → Devices & services → Discovered**. If it doesn't, use **Add integration → LULIS Battery BMS**.
+| Battery | BMS | BLE name | Status |
+|---|---|---|---|
+| LULIS 72V 40Ah LiFePO4 (24S) | `LR359V13_N031x60A` | `LK8625-…` | ✅ tested |
 
-### Manual
-Copy `custom_components/lulis_bms` into `<config>/custom_components/` and restart Home Assistant.
+Other LULIS packs with an `LK86xx` module will most likely work. If yours does too (or doesn't), please [open an issue](https://github.com/Satrier/lulis-bms-ha/issues/new/choose).
 
-## Notes
+## Energy dashboard
 
-- The BMS accepts **one BLE connection at a time**. While Home Assistant is connected, the phone app can't connect. To free it, disable the integration entry.
-- The integration keeps the connection open and polls every 30 s.
-- A weak signal (below about -85 dBm) causes frequent disconnects. An ESP32 running ESPHome Bluetooth Proxy near the battery fixes this.
+**Settings → Dashboards → Energy → Battery storage → Add battery system**:
+- *Energy going in to the battery*: `sensor.lulis_battery_energy_charged`
+- *Energy going out of the battery*: `sensor.lulis_battery_energy_discharged`
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Entities are *Unavailable* | Close the phone app: only one BLE connection is allowed. Check **Settings → Bluetooth** to see whether an adapter actually hears the battery. |
+| Frequent drop-outs | The signal is too weak (below about -85 dBm). Put an [ESPHome Bluetooth proxy](https://esphome.io/projects/?type=bluetooth) (ESP32, ~$5) near the battery. |
+| Phone app can't connect | Disable the integration entry while you use the app. |
+| Wrong or odd values | Attach **Download diagnostics** (device page → ⋮) to an issue. |
+
+Debug logging:
+
+```yaml
+logger:
+  logs:
+    custom_components.lulis_bms: debug
+```
 
 ## Protocol
 
@@ -57,6 +100,19 @@ Integers: little-endian signed int16. Temperatures: 0.1 K (°C = (raw - 2731) / 
 | `20` | count, balance bitmap (ceil(n/8) bytes), then cell voltages (mV) |
 | `3C` | control (write, 5 bytes): sleep, discharge MOS, charge MOS, MCU reset, storage mode. `00` = off, `01` = on, `FF` = unchanged |
 
+## Development
+
+```bash
+pip install ruff pytest
+ruff check . && ruff format --check . && pytest
+```
+
+To release, push a tag (`git tag v0.2.0 && git push --tags`). GitHub Actions sets the manifest version, builds `lulis_bms.zip` and publishes the release that HACS installs.
+
+## Credits
+
+Inspired by [batmon-ha](https://github.com/fl4p/batmon-ha) and [BMS_BLE-HA](https://github.com/patman15/BMS_BLE-HA).
+
 ## License
 
-MIT
+[MIT](LICENSE)

@@ -3,7 +3,7 @@
     "flow_title": "{name}",
     "step": {
       "user": {
-        "title": "LULIS Battery BMS",
+        "description": "Choose the LULIS battery to add. Close the LULIS BATTERY phone app first: the BMS accepts only one Bluetooth connection.",
         "data": { "address": "Device" }
       },
       "bluetooth_confirm": {
@@ -13,6 +13,33 @@
     "abort": {
       "already_configured": "Device is already configured",
       "no_devices_found": "No LULIS (LK86xx) batteries found nearby"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "voltage": { "name": "Voltage" },
+      "current": { "name": "Current" },
+      "power": { "name": "Power" },
+      "soc": { "name": "State of charge" },
+      "remaining": { "name": "Remaining capacity" },
+      "cell_max": { "name": "Cell voltage max" },
+      "cell_min": { "name": "Cell voltage min" },
+      "cell_diff": { "name": "Cell voltage delta" },
+      "soh": { "name": "State of health" },
+      "cycles": { "name": "Cycles" },
+      "capacity_design": { "name": "Design capacity" },
+      "flags": { "name": "Status flags" },
+      "temp_1": { "name": "Temperature 1" },
+      "temp_2": { "name": "Temperature 2" },
+      "temp_mos": { "name": "MOS temperature" },
+      "temp_n": { "name": "Temperature {index}" },
+      "cell_voltage": { "name": "Cell {index} voltage" },
+      "energy_charged": { "name": "Energy charged" },
+      "energy_discharged": { "name": "Energy discharged" }
+    },
+    "switch": {
+      "charge_mos": { "name": "Charging" },
+      "discharge_mos": { "name": "Discharging" }
     }
   }
 }

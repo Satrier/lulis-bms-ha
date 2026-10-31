@@ -1,0 +1,27 @@
+{
+  "entity": {
+    "sensor": {
+      "remaining": { "default": "mdi:battery-clock" },
+      "cell_max": { "default": "mdi:arrow-up-bold" },
+      "cell_min": { "default": "mdi:arrow-down-bold" },
+      "cell_diff": { "default": "mdi:delta" },
+      "soh": { "default": "mdi:heart-pulse" },
+      "cycles": { "default": "mdi:battery-sync" },
+      "capacity_design": { "default": "mdi:battery-high" },
+      "flags": { "default": "mdi:alert-circle-outline" },
+      "cell_voltage": { "default": "mdi:battery-outline" },
+      "energy_charged": { "default": "mdi:battery-plus" },
+      "energy_discharged": { "default": "mdi:battery-minus" }
+    },
+    "switch": {
+      "charge_mos": {
+        "default": "mdi:battery-charging",
+        "state": { "off": "mdi:battery-off-outline" }
+      },
+      "discharge_mos": {
+        "default": "mdi:battery-arrow-down",
+        "state": { "off": "mdi:battery-off-outline" }
+      }
+    }
+  }
+}

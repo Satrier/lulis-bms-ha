@@ -1,0 +1,45 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "Оберіть батарею LULIS. Спершу закрийте застосунок LULIS BATTERY на телефоні: BMS приймає лише одне Bluetooth-з'єднання.",
+        "data": { "address": "Пристрій" }
+      },
+      "bluetooth_confirm": {
+        "description": "Додати батарею LULIS {name}?"
+      }
+    },
+    "abort": {
+      "already_configured": "Пристрій уже налаштовано",
+      "no_devices_found": "Поруч не знайдено батарей LULIS (LK86xx)"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "voltage": { "name": "Напруга" },
+      "current": { "name": "Струм" },
+      "power": { "name": "Потужність" },
+      "soc": { "name": "Заряд" },
+      "remaining": { "name": "Залишок ємності" },
+      "cell_max": { "name": "Макс. напруга комірки" },
+      "cell_min": { "name": "Мін. напруга комірки" },
+      "cell_diff": { "name": "Різниця напруг комірок" },
+      "soh": { "name": "Стан здоров'я" },
+      "cycles": { "name": "Цикли" },
+      "capacity_design": { "name": "Номінальна ємність" },
+      "flags": { "name": "Прапорці стану" },
+      "temp_1": { "name": "Температура 1" },
+      "temp_2": { "name": "Температура 2" },
+      "temp_mos": { "name": "Температура MOS" },
+      "temp_n": { "name": "Температура {index}" },
+      "cell_voltage": { "name": "Комірка {index}" },
+      "energy_charged": { "name": "Енергія заряду" },
+      "energy_discharged": { "name": "Енергія розряду" }
+    },
+    "switch": {
+      "charge_mos": { "name": "Заряд" },
+      "discharge_mos": { "name": "Розряд" }
+    }
+  }
+}
