@@ -1,0 +1,111 @@
+blueprint:
+  name: LULIS battery alerts
+  description: >
+    Notify when a LULIS battery reports a BMS problem, gets low, its cells
+    drift apart or it overheats. Choose any notification action you like
+    (mobile app, Telegram, persistent notification…).
+  domain: automation
+  source_url: https://github.com/Satrier/lulis-bms-ha/blob/main/blueprints/automation/lulis_bms/battery_alerts.yaml
+  input:
+    problem_sensor:
+      name: Problem sensor
+      description: binary_sensor.*_problem of the battery
+      selector:
+        entity:
+          filter:
+            - integration: lulis_bms
+              domain: binary_sensor
+    soc_sensor:
+      name: State of charge sensor
+      selector:
+        entity:
+          filter:
+            - integration: lulis_bms
+              domain: sensor
+              device_class: battery
+    soc_low:
+      name: Low state of charge (%)
+      default: 20
+      selector:
+        number: { min: 1, max: 90, unit_of_measurement: "%" }
+    delta_sensor:
+      name: Cell voltage delta sensor
+      selector:
+        entity:
+          filter:
+            - integration: lulis_bms
+              domain: sensor
+              device_class: voltage
+    delta_high:
+      name: Cell imbalance threshold (V)
+      default: 0.1
+      selector:
+        number: { min: 0.01, max: 1, step: 0.01, unit_of_measurement: V }
+    temp_sensors:
+      name: Temperature sensors
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - integration: lulis_bms
+              domain: sensor
+              device_class: temperature
+    temp_high:
+      name: High temperature (°C)
+      default: 50
+      selector:
+        number: { min: 30, max: 80, unit_of_measurement: "°C" }
+    hold_minutes:
+      name: Condition must last (minutes)
+      default: 2
+      selector:
+        number: { min: 0, max: 60, unit_of_measurement: min }
+    notify:
+      name: Notification action
+      description: >
+        Use {{ title }} and {{ message }} in your action, e.g. a
+        notify.mobile_app_* action with title "{{ title }}" and message "{{ message }}".
+      selector:
+        action: {}
+
+mode: queued
+max_exceeded: silent
+
+triggers:
+  - trigger: state
+    entity_id: !input problem_sensor
+    to: "on"
+    id: problem
+  - trigger: numeric_state
+    entity_id: !input soc_sensor
+    below: !input soc_low
+    for: { minutes: !input hold_minutes }
+    id: soc
+  - trigger: numeric_state
+    entity_id: !input delta_sensor
+    above: !input delta_high
+    for: { minutes: !input hold_minutes }
+    id: delta
+  - trigger: numeric_state
+    entity_id: !input temp_sensors
+    above: !input temp_high
+    for: { minutes: !input hold_minutes }
+    id: temp
+
+variables:
+  title: "🔋 LULIS battery"
+  message: >
+    {% set name = state_attr(trigger.entity_id, 'friendly_name') %}
+    {% if trigger.id == 'problem' %}
+      BMS problem: alarms {{ state_attr(trigger.entity_id, 'alarms') | join(', ') or '-' }},
+      protections {{ state_attr(trigger.entity_id, 'protections') | join(', ') or '-' }},
+      faults {{ state_attr(trigger.entity_id, 'faults') | join(', ') or '-' }}
+    {% elif trigger.id == 'soc' %}
+      Low charge: {{ trigger.to_state.state }} %
+    {% elif trigger.id == 'delta' %}
+      Cell imbalance: {{ (trigger.to_state.state | float * 1000) | round(0) }} mV
+    {% else %}
+      {{ name }}: {{ trigger.to_state.state }} °C
+    {% endif %}
+
+actions: !input notify

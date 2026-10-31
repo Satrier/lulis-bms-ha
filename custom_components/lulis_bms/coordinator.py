@@ -18,35 +18,50 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import CHAR_RX, CHAR_TX, DOMAIN, REPLY_TIMEOUT_S, UPDATE_INTERVAL_S
+from .const import (
+    CHAR_RX,
+    CHAR_TX,
+    CONF_INVERT_CURRENT,
+    CONF_KEEP_CONNECTED,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_KEEP_CONNECTED,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    REPLY_TIMEOUT_S,
+)
 from .protocol import (
     CMD_CONTROL,
     CMD_PACK,
     POLL_COMMANDS,
     STATIC_COMMANDS,
+    THRESHOLDS,
     FrameParser,
     build_control,
     build_read,
     decode,
+    decode_threshold,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Keeps one BLE connection open and polls the BMS."""
+    """Owns the BLE link to one battery and polls it."""
 
     config_entry: ConfigEntry
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        opts = entry.options
         super().__init__(
             hass,
             _LOGGER,
             config_entry=entry,
             name=f"{DOMAIN} {entry.data[CONF_ADDRESS]}",
-            update_interval=timedelta(seconds=UPDATE_INTERVAL_S),
+            update_interval=timedelta(seconds=opts.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)),
         )
         self.address: str = entry.data[CONF_ADDRESS]
+        self.keep_connected: bool = opts.get(CONF_KEEP_CONNECTED, DEFAULT_KEEP_CONNECTED)
+        self.invert_current: bool = opts.get(CONF_INVERT_CURRENT, False)
         self.last_frames: dict[int, bytes] = {}
         self._client: BleakClientWithServiceCache | None = None
         self._parser = FrameParser()
@@ -97,6 +112,11 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._waiters.pop(cmd, None)
             return None
 
+    async def _release(self) -> None:
+        """Drop the link after a transaction unless we keep it open."""
+        if not self.keep_connected:
+            await self.async_disconnect()
+
     # --- polling ------------------------------------------------------------
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -113,11 +133,16 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             except (BleakError, TimeoutError) as err:
                 await self.async_disconnect()
                 raise UpdateFailed(f"BLE error: {err}") from err
+            finally:
+                await self._release()
         if CMD_PACK not in frames:
             await self.async_disconnect()
             raise UpdateFailed("No reply to pack status request")
         self.last_frames = frames
         data = decode(frames)
+        if self.invert_current and "current" in data:
+            data["current"] = -data["current"]
+            data["power"] = -data["power"]
         self._update_device_info(data)
         return data
 
@@ -129,9 +154,27 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             registry.async_update_device(device.id, model=data.get("model"), serial_number=data.get("serial"))
             self._device_info_set = True
 
+    # --- diagnostics --------------------------------------------------------
+
+    async def async_read_thresholds(self) -> dict[str, Any]:
+        """Read protection thresholds (read-only, used by diagnostics)."""
+        out: dict[str, Any] = {}
+        async with self._lock:
+            try:
+                client = await self._ensure_connected()
+                for cmd in THRESHOLDS:
+                    payload = await self._transact(client, cmd, build_read(cmd))
+                    out[f"0x{cmd:02x}"] = decode_threshold(cmd, payload) if payload is not None else None
+            except (BleakError, TimeoutError, UpdateFailed) as err:
+                await self.async_disconnect()
+                out["error"] = str(err)
+            finally:
+                await self._release()
+        return out
+
     # --- control ------------------------------------------------------------
 
-    async def async_control(self, slot: int, on: bool) -> None:
+    async def async_control(self, slot: int, on: bool, refresh: bool = True) -> None:
         """Send a Control (0x3C) command, then refresh state."""
         async with self._lock:
             try:
@@ -141,8 +184,11 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             except (BleakError, TimeoutError, UpdateFailed) as err:
                 await self.async_disconnect()
                 raise HomeAssistantError(f"Battery not reachable: {err}") from err
-        await asyncio.sleep(1)
-        await self.async_request_refresh()
+            finally:
+                await self._release()
+        if refresh:
+            await asyncio.sleep(1)
+            await self.async_request_refresh()
 
     async def async_disconnect(self) -> None:
         client, self._client = self._client, None

@@ -4,7 +4,9 @@
     "step": {
       "user": {
         "description": "Choose the LULIS battery to add. Close the LULIS BATTERY phone app first: the BMS accepts only one Bluetooth connection.",
-        "data": { "address": "Device" }
+        "data": {
+          "address": "Device"
+        }
       },
       "bluetooth_confirm": {
         "description": "Set up LULIS battery {name}?"
@@ -17,29 +19,153 @@
   },
   "entity": {
     "sensor": {
-      "voltage": { "name": "Voltage" },
-      "current": { "name": "Current" },
-      "power": { "name": "Power" },
-      "soc": { "name": "State of charge" },
-      "remaining": { "name": "Remaining capacity" },
-      "cell_max": { "name": "Cell voltage max" },
-      "cell_min": { "name": "Cell voltage min" },
-      "cell_diff": { "name": "Cell voltage delta" },
-      "soh": { "name": "State of health" },
-      "cycles": { "name": "Cycles" },
-      "capacity_design": { "name": "Design capacity" },
-      "flags": { "name": "Status flags" },
-      "temp_1": { "name": "Temperature 1" },
-      "temp_2": { "name": "Temperature 2" },
-      "temp_mos": { "name": "MOS temperature" },
-      "temp_n": { "name": "Temperature {index}" },
-      "cell_voltage": { "name": "Cell {index} voltage" },
-      "energy_charged": { "name": "Energy charged" },
-      "energy_discharged": { "name": "Energy discharged" }
+      "voltage": {
+        "name": "Voltage"
+      },
+      "current": {
+        "name": "Current"
+      },
+      "power": {
+        "name": "Power"
+      },
+      "soc": {
+        "name": "State of charge"
+      },
+      "remaining": {
+        "name": "Remaining capacity"
+      },
+      "cell_max": {
+        "name": "Cell voltage max"
+      },
+      "cell_min": {
+        "name": "Cell voltage min"
+      },
+      "cell_diff": {
+        "name": "Cell voltage delta"
+      },
+      "soh": {
+        "name": "State of health"
+      },
+      "cycles": {
+        "name": "Cycles"
+      },
+      "capacity_design": {
+        "name": "Design capacity"
+      },
+      "flags": {
+        "name": "Status flags"
+      },
+      "temp_1": {
+        "name": "Temperature 1"
+      },
+      "temp_2": {
+        "name": "Temperature 2"
+      },
+      "temp_mos": {
+        "name": "MOS temperature"
+      },
+      "temp_n": {
+        "name": "Temperature {index}"
+      },
+      "cell_voltage": {
+        "name": "Cell {index} voltage"
+      },
+      "energy_charged": {
+        "name": "Energy charged"
+      },
+      "energy_discharged": {
+        "name": "Energy discharged"
+      },
+      "alarm": {
+        "name": "Alarm",
+        "state": {
+          "ok": "OK",
+          "cell_overvoltage": "Cell overvoltage",
+          "cell_undervoltage": "Cell undervoltage",
+          "pack_overvoltage": "Pack overvoltage",
+          "pack_undervoltage": "Pack undervoltage",
+          "discharge_overcurrent": "Discharge overcurrent",
+          "charge_overcurrent": "Charge overcurrent",
+          "discharge_overtemp": "Discharge over-temperature",
+          "charge_overtemp": "Charge over-temperature",
+          "discharge_undertemp": "Discharge under-temperature",
+          "charge_undertemp": "Charge under-temperature",
+          "soc_high": "SOC high",
+          "soc_low": "SOC low",
+          "cell_imbalance": "Cell voltage imbalance",
+          "temp_imbalance": "Temperature imbalance",
+          "mos_overtemp": "MOS over-temperature",
+          "ambient_overtemp": "Ambient over-temperature",
+          "ambient_undertemp": "Ambient under-temperature",
+          "discharge_overcurrent_instant": "Instant discharge overcurrent"
+        }
+      },
+      "protection": {
+        "name": "Protection",
+        "state": {
+          "ok": "OK",
+          "cell_overvoltage": "Cell overvoltage",
+          "cell_undervoltage": "Cell undervoltage",
+          "pack_overvoltage": "Pack overvoltage",
+          "pack_undervoltage": "Pack undervoltage",
+          "discharge_overcurrent": "Discharge overcurrent",
+          "charge_overcurrent": "Charge overcurrent",
+          "discharge_overtemp": "Discharge over-temperature",
+          "charge_overtemp": "Charge over-temperature",
+          "discharge_undertemp": "Discharge under-temperature",
+          "charge_undertemp": "Charge under-temperature",
+          "soc_high": "SOC high",
+          "soc_low": "SOC low",
+          "cell_imbalance": "Cell voltage imbalance",
+          "temp_imbalance": "Temperature imbalance",
+          "mos_overtemp": "MOS over-temperature",
+          "ambient_overtemp": "Ambient over-temperature",
+          "ambient_undertemp": "Ambient under-temperature",
+          "discharge_overcurrent_instant": "Instant discharge overcurrent",
+          "discharge_mos_failure": "Discharge MOS failure",
+          "charge_mos_failure": "Charge MOS failure",
+          "eeprom_failure": "EEPROM write failure",
+          "low_voltage_charge_lock": "Low voltage, charging prohibited",
+          "short_circuit": "Short circuit protection"
+        }
+      }
     },
     "switch": {
-      "charge_mos": { "name": "Charging" },
-      "discharge_mos": { "name": "Discharging" }
+      "charge_mos": {
+        "name": "Charging"
+      },
+      "discharge_mos": {
+        "name": "Discharging"
+      }
+    },
+    "binary_sensor": {
+      "problem": {
+        "name": "Problem"
+      }
+    },
+    "button": {
+      "restart": {
+        "name": "Restart BMS"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "LULIS battery options",
+        "description": "**Keep connected** gives the freshest data and instant control, but the phone app cannot connect while Home Assistant holds the link. Turn it off to connect only for each poll (minimum interval 60 s; less reliable with a weak signal).",
+        "data": {
+          "keep_connected": "Keep Bluetooth connection open",
+          "scan_interval": "Polling interval",
+          "invert_current": "Invert current sign"
+        },
+        "data_description": {
+          "invert_current": "Enable if Current is negative while charging (affects power and energy sensors)."
+        }
+      }
+    },
+    "error": {
+      "interval_too_short": "Without a permanent connection the interval must be at least 60 s."
     }
   }
 }

@@ -64,3 +64,33 @@ def test_decode() -> None:
     assert d["capacity_design"] == 40.0
     assert d["discharge_mos"] is True
     assert d["charge_mos"] is False
+
+
+def _pack_with_status(alarm1: int = 0, alarm2: int = 0, prot1: int = 0, prot2: int = 0, fault: int = 0) -> bytes:
+    payload = bytearray(_frames(20)[0x1E])
+    for off, word in ((26, alarm1), (28, alarm2), (30, prot1), (32, prot2), (34, fault)):
+        payload[off : off + 2] = word.to_bytes(2, "little")
+    return bytes(payload)
+
+
+def test_status_bits() -> None:
+    d = protocol.decode({0x1E: _pack_with_status()})
+    assert d["alarms"] == d["protections"] == d["faults"] == []
+
+    d = protocol.decode(
+        {0x1E: _pack_with_status(alarm1=1 << 0 | 1 << 12, alarm2=1 << 1, prot1=1 << 5, fault=1 << 4 | 1 << 9)}
+    )
+    assert d["alarms"] == ["cell_overvoltage", "cell_imbalance", "discharge_overcurrent_instant"]
+    assert d["protections"] == ["charge_overcurrent"]
+    assert d["faults"] == ["short_circuit"]  # bits above 4 are ignored, like the app
+
+
+def test_threshold_decode() -> None:
+    # cell overvoltage: protect 3.65 V, restore 3.40 V, alarm 3.60 V, delays 10/20/30 (x100 ms), enable 1
+    vals = (3650, 3400, 3600, 10, 20, 30, 1)
+    payload = b"".join(v.to_bytes(2, "little") for v in vals)
+    t = protocol.decode_threshold(0x28, payload)
+    assert t["name"] == "cell_overvoltage"
+    assert t["values"] == [3.65, 3.4, 3.6]
+    assert t["delays_ms"] == [1000, 2000, 3000]
+    assert t["enable"] == 1

@@ -4,7 +4,9 @@
     "step": {
       "user": {
         "description": "Оберіть батарею LULIS. Спершу закрийте застосунок LULIS BATTERY на телефоні: BMS приймає лише одне Bluetooth-з'єднання.",
-        "data": { "address": "Пристрій" }
+        "data": {
+          "address": "Пристрій"
+        }
       },
       "bluetooth_confirm": {
         "description": "Додати батарею LULIS {name}?"
@@ -17,29 +19,153 @@
   },
   "entity": {
     "sensor": {
-      "voltage": { "name": "Напруга" },
-      "current": { "name": "Струм" },
-      "power": { "name": "Потужність" },
-      "soc": { "name": "Заряд" },
-      "remaining": { "name": "Залишок ємності" },
-      "cell_max": { "name": "Макс. напруга комірки" },
-      "cell_min": { "name": "Мін. напруга комірки" },
-      "cell_diff": { "name": "Різниця напруг комірок" },
-      "soh": { "name": "Стан здоров'я" },
-      "cycles": { "name": "Цикли" },
-      "capacity_design": { "name": "Номінальна ємність" },
-      "flags": { "name": "Прапорці стану" },
-      "temp_1": { "name": "Температура 1" },
-      "temp_2": { "name": "Температура 2" },
-      "temp_mos": { "name": "Температура MOS" },
-      "temp_n": { "name": "Температура {index}" },
-      "cell_voltage": { "name": "Комірка {index}" },
-      "energy_charged": { "name": "Енергія заряду" },
-      "energy_discharged": { "name": "Енергія розряду" }
+      "voltage": {
+        "name": "Напруга"
+      },
+      "current": {
+        "name": "Струм"
+      },
+      "power": {
+        "name": "Потужність"
+      },
+      "soc": {
+        "name": "Заряд"
+      },
+      "remaining": {
+        "name": "Залишок ємності"
+      },
+      "cell_max": {
+        "name": "Макс. напруга комірки"
+      },
+      "cell_min": {
+        "name": "Мін. напруга комірки"
+      },
+      "cell_diff": {
+        "name": "Різниця напруг комірок"
+      },
+      "soh": {
+        "name": "Стан здоров'я"
+      },
+      "cycles": {
+        "name": "Цикли"
+      },
+      "capacity_design": {
+        "name": "Номінальна ємність"
+      },
+      "flags": {
+        "name": "Прапорці стану"
+      },
+      "temp_1": {
+        "name": "Температура 1"
+      },
+      "temp_2": {
+        "name": "Температура 2"
+      },
+      "temp_mos": {
+        "name": "Температура MOS"
+      },
+      "temp_n": {
+        "name": "Температура {index}"
+      },
+      "cell_voltage": {
+        "name": "Комірка {index}"
+      },
+      "energy_charged": {
+        "name": "Енергія заряду"
+      },
+      "energy_discharged": {
+        "name": "Енергія розряду"
+      },
+      "alarm": {
+        "name": "Тривога",
+        "state": {
+          "ok": "Норма",
+          "cell_overvoltage": "Перенапруга комірки",
+          "cell_undervoltage": "Недонапруга комірки",
+          "pack_overvoltage": "Перенапруга батареї",
+          "pack_undervoltage": "Недонапруга батареї",
+          "discharge_overcurrent": "Перевищення струму розряду",
+          "charge_overcurrent": "Перевищення струму заряду",
+          "discharge_overtemp": "Перегрів при розряді",
+          "charge_overtemp": "Перегрів при заряді",
+          "discharge_undertemp": "Низька температура при розряді",
+          "charge_undertemp": "Низька температура при заряді",
+          "soc_high": "Високий заряд",
+          "soc_low": "Низький заряд",
+          "cell_imbalance": "Розбаланс комірок",
+          "temp_imbalance": "Різниця температур",
+          "mos_overtemp": "Перегрів MOS",
+          "ambient_overtemp": "Висока температура середовища",
+          "ambient_undertemp": "Низька температура середовища",
+          "discharge_overcurrent_instant": "Миттєве перевищення струму розряду"
+        }
+      },
+      "protection": {
+        "name": "Захист",
+        "state": {
+          "ok": "Норма",
+          "cell_overvoltage": "Перенапруга комірки",
+          "cell_undervoltage": "Недонапруга комірки",
+          "pack_overvoltage": "Перенапруга батареї",
+          "pack_undervoltage": "Недонапруга батареї",
+          "discharge_overcurrent": "Перевищення струму розряду",
+          "charge_overcurrent": "Перевищення струму заряду",
+          "discharge_overtemp": "Перегрів при розряді",
+          "charge_overtemp": "Перегрів при заряді",
+          "discharge_undertemp": "Низька температура при розряді",
+          "charge_undertemp": "Низька температура при заряді",
+          "soc_high": "Високий заряд",
+          "soc_low": "Низький заряд",
+          "cell_imbalance": "Розбаланс комірок",
+          "temp_imbalance": "Різниця температур",
+          "mos_overtemp": "Перегрів MOS",
+          "ambient_overtemp": "Висока температура середовища",
+          "ambient_undertemp": "Низька температура середовища",
+          "discharge_overcurrent_instant": "Миттєве перевищення струму розряду",
+          "discharge_mos_failure": "Несправність MOS розряду",
+          "charge_mos_failure": "Несправність MOS заряду",
+          "eeprom_failure": "Помилка запису EEPROM",
+          "low_voltage_charge_lock": "Низька напруга, заряд заборонено",
+          "short_circuit": "Захист від короткого замикання"
+        }
+      }
     },
     "switch": {
-      "charge_mos": { "name": "Заряд" },
-      "discharge_mos": { "name": "Розряд" }
+      "charge_mos": {
+        "name": "Заряд"
+      },
+      "discharge_mos": {
+        "name": "Розряд"
+      }
+    },
+    "binary_sensor": {
+      "problem": {
+        "name": "Проблема"
+      }
+    },
+    "button": {
+      "restart": {
+        "name": "Перезапустити BMS"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Налаштування батареї LULIS",
+        "description": "**Постійне з'єднання** дає найсвіжіші дані та миттєве керування, але застосунок на телефоні не зможе підключитися, поки HA тримає зв'язок. Вимкніть, щоб підключатися лише на час опитування (мінімальний інтервал 60 с; зі слабким сигналом менш надійно).",
+        "data": {
+          "keep_connected": "Тримати Bluetooth-з'єднання відкритим",
+          "scan_interval": "Інтервал опитування",
+          "invert_current": "Інвертувати знак струму"
+        },
+        "data_description": {
+          "invert_current": "Увімкніть, якщо під час заряду струм від'ємний (впливає на потужність і лічильники енергії)."
+        }
+      }
+    },
+    "error": {
+      "interval_too_short": "Без постійного з'єднання інтервал має бути щонайменше 60 с."
     }
   }
 }

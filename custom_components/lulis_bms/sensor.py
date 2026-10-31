@@ -29,6 +29,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from . import LulisConfigEntry
 from .coordinator import LulisCoordinator
 from .entity import LulisEntity
+from .protocol import ALARM_STATES, PROTECTION_STATES
 
 AH = "Ah"
 MAX_INTEGRATION_GAP_S = 300  # don't integrate energy across longer outages
@@ -169,6 +170,35 @@ class LulisIndexedSensor(LulisSensor):
         self._attr_translation_placeholders = {"index": str(index)}
 
 
+class LulisStatusSensor(LulisEntity, SensorEntity):
+    """Enum sensor: 'ok' or the first active alarm / protection; full list in attributes."""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+
+    def __init__(self, coordinator: LulisCoordinator, key: str, sources: tuple[str, ...], options: tuple[str, ...]):
+        super().__init__(coordinator, key)
+        self._attr_translation_key = key
+        self._sources = sources
+        self._attr_options = ["ok", *options]
+
+    def _active(self) -> list[str] | None:
+        d = self.coordinator.data or {}
+        if "alarms" not in d:
+            return None
+        return [x for src in self._sources for x in d.get(src, ())]
+
+    @property
+    def native_value(self) -> str | None:
+        active = self._active()
+        if active is None:
+            return None
+        return active[0] if active else "ok"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {"active": self._active() or []}
+
+
 class LulisEnergySensor(LulisEntity, RestoreSensor):
     """Integrates pack power into charged / discharged kWh for the Energy dashboard."""
 
@@ -232,7 +262,9 @@ async def async_setup_entry(
             **_CELL_VOLT,
         )
         entities.append(LulisIndexedSensor(coordinator, desc, i + 1))
-    # BMS convention: positive current = charging
+    entities.append(LulisStatusSensor(coordinator, "alarm", ("alarms",), ALARM_STATES))
+    entities.append(LulisStatusSensor(coordinator, "protection", ("protections", "faults"), PROTECTION_STATES))
+    # BMS convention: positive current = charging (option "invert current" flips it)
     entities.append(LulisEnergySensor(coordinator, "energy_charged", +1))
     entities.append(LulisEnergySensor(coordinator, "energy_discharged", -1))
     async_add_entities(entities)

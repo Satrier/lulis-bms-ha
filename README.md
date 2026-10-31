@@ -38,9 +38,12 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 - 🧮 **Cells**: voltage of every cell, plus min, max and delta
 - 🌡️ **Temperatures**: T1, T2 and MOS
 - ⚡ **Energy dashboard**: *Energy charged* / *Energy discharged* in kWh, kept across restarts
-- 🎛️ **Control**: *Charging* and *Discharging* switches (charge/discharge MOS)
+- 🎛️ **Control**: *Charging* and *Discharging* switches (charge/discharge MOS), *Restart BMS* button (disabled by default)
+- 🚨 **Alarms**: *Alarm* and *Protection* sensors with the exact BMS reason (cell overvoltage, overheating, short circuit, …), plus a *Problem* binary sensor for automations
 - 🩺 **Health**: state of health, cycles, design capacity, raw status flags
-- 🧾 **Diagnostics** download with raw BMS frames, for bug reports
+- 🧾 **Diagnostics** download with raw BMS frames and the protection thresholds (read-only)
+- ⚙️ **Options**: polling interval, keep-connected vs connect-per-poll (to let the phone app in), invert current
+- 🔔 **Alerts blueprint** and a ready-made **dashboard**
 - 🌍 English and Ukrainian translations
 
 > ⚠️ Turning **Discharging** off cuts power to the load immediately.
@@ -52,6 +55,26 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 | LULIS 72V 40Ah LiFePO4 (24S) | `LR359V13_N031x60A` | `LK8625-…` | ✅ tested |
 
 Other LULIS packs with an `LK86xx` module will most likely work. If yours does too (or doesn't), please [open an issue](https://github.com/Satrier/lulis-bms-ha/issues/new/choose).
+
+## Options
+
+**Settings → Devices & services → LULIS Battery BMS → Configure**
+
+| Option | Default | Notes |
+|---|---|---|
+| Keep Bluetooth connection open | on | Gives the freshest data and instant switching. Turn it off to connect only for each poll, so the phone app can connect in between (minimum interval 60 s). |
+| Polling interval | 30 s | 10–300 s |
+| Invert current sign | off | Turn on if *Current* is negative while charging. This also affects power and energy. |
+
+## Alerts
+
+[![Import blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FSatrier%2Flulis-bms-ha%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Flulis_bms%2Fbattery_alerts.yaml)
+
+The blueprint notifies you about BMS problems (alarm, protection or fault), low charge, cell imbalance and high temperature. You set the thresholds and the notification action in the UI.
+
+## Dashboard
+
+[`examples/dashboard.yaml`](examples/dashboard.yaml) is a complete view built only from stock cards: a charge gauge, power, the charge/discharge switches, cells, temperatures and history. Paste it in **Dashboard → Edit → Raw configuration editor**.
 
 ## Energy dashboard
 
@@ -67,6 +90,8 @@ Other LULIS packs with an `LK86xx` module will most likely work. If yours does t
 | Frequent drop-outs | The signal is too weak (below about -85 dBm). Put an [ESPHome Bluetooth proxy](https://esphome.io/projects/?type=bluetooth) (ESP32, ~$5) near the battery. |
 | Phone app can't connect | Disable the integration entry while you use the app. |
 | Wrong or odd values | Attach **Download diagnostics** (device page → ⋮) to an issue. |
+| Energy counters swapped | Turn on **Invert current sign** in the options. |
+| *Restart BMS* | The BMS reboots and the link drops for a few seconds, then reconnects. |
 
 Debug logging:
 

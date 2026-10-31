@@ -1,0 +1,64 @@
+# LULIS battery dashboard view, built from stock Home Assistant cards only.
+# Dashboard → ⋮ → Edit → ⋮ → Raw configuration editor → paste under `views:`.
+# Replace `lulis_battery` with your device's entity prefix if it differs
+# (new installs are named e.g. `lulis_c4a386`).
+title: Battery
+path: battery
+icon: mdi:battery-high
+type: sections
+sections:
+  - type: grid
+    cards:
+      - type: gauge
+        entity: sensor.lulis_battery_battery
+        name: Charge
+        needle: true
+        severity: { red: 0, yellow: 20, green: 40 }
+      - type: tile
+        entity: sensor.lulis_battery_power
+      - type: tile
+        entity: sensor.lulis_battery_voltage
+      - type: tile
+        entity: sensor.lulis_battery_current
+      - type: tile
+        entity: sensor.lulis_battery_remaining_capacity
+      - type: tile
+        entity: binary_sensor.lulis_battery_problem
+      - type: tile
+        entity: switch.lulis_battery_charging
+        features: [{ type: toggle }]
+      - type: tile
+        entity: switch.lulis_battery_discharging
+        features: [{ type: toggle }]
+  - type: grid
+    cards:
+      - type: entities
+        title: Cells
+        entities:
+          - sensor.lulis_battery_cell_voltage_max
+          - sensor.lulis_battery_cell_voltage_min
+          - sensor.lulis_battery_cell_voltage_delta
+          - sensor.lulis_battery_alarm
+          - sensor.lulis_battery_protection
+      - type: entities
+        title: Temperature
+        entities:
+          - sensor.lulis_battery_temperature_1
+          - sensor.lulis_battery_temperature_2
+          - sensor.lulis_battery_mos_temperature
+  - type: grid
+    column_span: 2
+    cards:
+      - type: history-graph
+        title: Pack
+        hours_to_show: 24
+        entities:
+          - sensor.lulis_battery_battery
+          - sensor.lulis_battery_power
+      - type: statistics-graph
+        title: Cell spread
+        chart_type: line
+        stat_types: [mean, min, max]
+        period: hour
+        entities:
+          - sensor.lulis_battery_cell_voltage_delta

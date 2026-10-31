@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from homeassistant.const import CONF_NAME
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -21,7 +22,8 @@ class LulisEntity(CoordinatorEntity[LulisCoordinator]):
             identifiers={(DOMAIN, coordinator.address)},
             connections={(dr.CONNECTION_BLUETOOTH, coordinator.address)},
             manufacturer="LULIS",
-            name="LULIS Battery",
+            # entries created before v0.2.0 have no stored name: keep "LULIS Battery"
+            name=coordinator.config_entry.data.get(CONF_NAME, "LULIS Battery"),
             model=data.get("model"),
             serial_number=data.get("serial"),
         )

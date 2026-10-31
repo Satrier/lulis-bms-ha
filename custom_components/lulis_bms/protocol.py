@@ -27,6 +27,59 @@ POLL_COMMANDS = (CMD_PACK, CMD_TEMPS, CMD_CELLS, CMD_CYCLES)
 # Control (0x3C) slots, as on the app's Control tab: 00=off, 01=on, FF=unchanged
 CTL_SLEEP, CTL_DISCHARGE, CTL_CHARGE, CTL_RESET, CTL_STORAGE = range(5)
 
+# Status words in the 0x1E payload (little-endian 16-bit, bit n = list[n]),
+# names from the app's tipListA / tipListC / tipListB.
+STATUS_WORD1 = (
+    "cell_overvoltage",
+    "cell_undervoltage",
+    "pack_overvoltage",
+    "pack_undervoltage",
+    "discharge_overcurrent",
+    "charge_overcurrent",
+    "discharge_overtemp",
+    "charge_overtemp",
+    "discharge_undertemp",
+    "charge_undertemp",
+    "soc_high",
+    "soc_low",
+    "cell_imbalance",
+    "temp_imbalance",
+    "mos_overtemp",
+    "ambient_overtemp",
+)
+STATUS_WORD2 = ("ambient_undertemp", "discharge_overcurrent_instant")
+FAULT_WORD = (  # the app only shows bits 0..4
+    "discharge_mos_failure",
+    "charge_mos_failure",
+    "eeprom_failure",
+    "low_voltage_charge_lock",
+    "short_circuit",
+)
+ALARM_STATES = STATUS_WORD1 + STATUS_WORD2
+PROTECTION_STATES = ALARM_STATES + FAULT_WORD
+
+# Protection thresholds (read-only, diagnostics). Payload = 7 int16: A, B, C, D, E, F, G
+# where A-C share the unit below, D-F are delays (x100 ms), G is the enable flag.
+THRESHOLDS: dict[int, tuple[str, str, float]] = {
+    0x28: ("cell_overvoltage", "V", 0.001),
+    0x29: ("cell_undervoltage", "V", 0.001),
+    0x2A: ("pack_overvoltage", "V", 0.01),
+    0x2B: ("pack_undervoltage", "V", 0.01),
+    0x2C: ("discharge_overcurrent", "A", 0.1),
+    0x2D: ("charge_overcurrent", "A", 0.1),
+    0x2E: ("discharge_overtemp", "°C", 0),
+    0x2F: ("charge_overtemp", "°C", 0),
+    0x30: ("discharge_undertemp", "°C", 0),
+    0x31: ("charge_undertemp", "°C", 0),
+    0x32: ("soc_high", "", 1),
+    0x33: ("soc_low", "", 1),
+    0x34: ("cell_imbalance", "", 1),
+    0x35: ("temp_imbalance", "", 1),
+    0x36: ("mos_overtemp", "", 1),
+    0x37: ("ambient_overtemp", "", 1),
+    0x38: ("discharge_overcurrent_2", "", 1),
+}
+
 
 def _sum8(b: bytes) -> int:
     return sum(b) & 0xFF
@@ -88,6 +141,26 @@ class FrameParser:
                 out.append((frame[4], frame[6:-1]))
 
 
+def _bits(word: int, names: tuple[str, ...]) -> list[str]:
+    return [name for i, name in enumerate(names) if word >> i & 1]
+
+
+def decode_threshold(cmd: int, d: bytes) -> dict[str, Any]:
+    """Decode one protection-threshold payload (best effort, for diagnostics)."""
+    name, unit, scale = THRESHOLDS.get(cmd, (f"0x{cmd:02x}", "", 1))
+    vals = [_s16(d, 2 * i) for i in range(len(d) // 2)]
+    out: dict[str, Any] = {"name": name, "raw": d.hex()}
+    if len(vals) >= 7:
+        conv = (lambda v: _k2c(v)) if scale == 0 else (lambda v: round(v * scale, 3))
+        out.update(
+            values=[conv(v) for v in vals[:3]],
+            unit=unit,
+            delays_ms=[v * 100 for v in vals[3:6]],
+            enable=vals[6],
+        )
+    return out
+
+
 def decode(frames: dict[int, bytes]) -> dict[str, Any]:
     """Decode payloads keyed by command into a flat dict."""
     out: dict[str, Any] = {}
@@ -117,6 +190,10 @@ def decode(frames: dict[int, bytes]) -> dict[str, Any]:
             predischarge_mos=bool(d[36] & 0x20),
         )
         out["power"] = round(out["voltage"] * out["current"], 1)
+        a1, a2, p1, p2, flt = (d[o] | (d[o + 1] << 8) for o in (26, 28, 30, 32, 34))
+        out["alarms"] = _bits(a1, STATUS_WORD1) + _bits(a2, STATUS_WORD2)
+        out["protections"] = _bits(p1, STATUS_WORD1) + _bits(p2, STATUS_WORD2)
+        out["faults"] = _bits(flt, FAULT_WORD)
     if (d := frames.get(CMD_TEMPS)) is not None and len(d) >= 2:
         n = _s16(d, 0)
         out["temps"] = [_k2c(_s16(d, 2 + 2 * i)) for i in range(n) if 3 + 2 * i < len(d)]
