@@ -47,7 +47,13 @@
         }
       }
     },
-    "switch": {
+    "binary_sensor": {
+      "problem": {
+        "default": "mdi:alert-circle",
+        "state": {
+          "off": "mdi:check-circle-outline"
+        }
+      },
       "charge_mos": {
         "default": "mdi:battery-charging",
         "state": {
@@ -58,14 +64,6 @@
         "default": "mdi:battery-arrow-down",
         "state": {
           "off": "mdi:battery-off-outline"
-        }
-      }
-    },
-    "binary_sensor": {
-      "problem": {
-        "default": "mdi:alert-circle",
-        "state": {
-          "off": "mdi:check-circle-outline"
         }
       }
     }

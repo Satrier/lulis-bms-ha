@@ -1,4 +1,4 @@
-"""Problem binary sensor for LULIS BMS."""
+"""Binary sensors for LULIS BMS: problem + MOS states (read-only)."""
 
 from __future__ import annotations
 
@@ -38,9 +38,25 @@ class LulisProblemSensor(LulisEntity, BinarySensorEntity):
         return {k: d.get(k, []) for k in ("alarms", "protections", "faults")}
 
 
+class LulisMosSensor(LulisEntity, BinarySensorEntity):
+    """Charge / discharge MOS state as reported by the BMS (read-only)."""
+
+    _attr_device_class = BinarySensorDeviceClass.POWER
+
+    def __init__(self, coordinator: LulisCoordinator, key: str) -> None:
+        super().__init__(coordinator, f"{key}_state")
+        self._key = key
+        self._attr_translation_key = key
+
+    @property
+    def is_on(self) -> bool | None:
+        return (self.coordinator.data or {}).get(self._key)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: LulisConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities([LulisProblemSensor(entry.runtime_data)])
+    c = entry.runtime_data
+    async_add_entities([LulisProblemSensor(c), LulisMosSensor(c, "charge_mos"), LulisMosSensor(c, "discharge_mos")])

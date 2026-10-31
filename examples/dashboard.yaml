@@ -25,11 +25,9 @@ sections:
       - type: tile
         entity: binary_sensor.lulis_battery_problem
       - type: tile
-        entity: switch.lulis_battery_charging
-        features: [{ type: toggle }]
+        entity: binary_sensor.lulis_battery_charge_mos
       - type: tile
-        entity: switch.lulis_battery_discharging
-        features: [{ type: toggle }]
+        entity: binary_sensor.lulis_battery_discharge_mos
   - type: grid
     cards:
       - type: entities

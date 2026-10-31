@@ -130,17 +130,15 @@
         }
       }
     },
-    "switch": {
-      "charge_mos": {
-        "name": "Заряд"
-      },
-      "discharge_mos": {
-        "name": "Розряд"
-      }
-    },
     "binary_sensor": {
       "problem": {
         "name": "Проблема"
+      },
+      "charge_mos": {
+        "name": "MOS заряду"
+      },
+      "discharge_mos": {
+        "name": "MOS розряду"
       }
     },
     "button": {

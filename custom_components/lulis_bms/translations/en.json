@@ -130,17 +130,15 @@
         }
       }
     },
-    "switch": {
-      "charge_mos": {
-        "name": "Charging"
-      },
-      "discharge_mos": {
-        "name": "Discharging"
-      }
-    },
     "binary_sensor": {
       "problem": {
         "name": "Problem"
+      },
+      "charge_mos": {
+        "name": "Charge MOS"
+      },
+      "discharge_mos": {
+        "name": "Discharge MOS"
       }
     },
     "button": {

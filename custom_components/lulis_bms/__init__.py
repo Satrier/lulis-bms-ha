@@ -9,10 +9,13 @@ from homeassistant.helpers import entity_registry as er
 
 from .coordinator import LulisCoordinator
 
-PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.SENSOR, Platform.SWITCH]
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.SENSOR]
 
 # (platform, old unique_id suffix, new suffix) for keys renamed in earlier versions
 _RENAMED_KEYS = (("sensor", "temp_3", "temp_mos"),)
+# entities removed in later versions: (platform, unique_id suffix)
+# 0.3.0: MOS switches dropped, the BMS acknowledges but ignores 0x3C on LULIS packs
+_REMOVED_KEYS = (("switch", "charge_mos"), ("switch", "discharge_mos"))
 
 type LulisConfigEntry = ConfigEntry[LulisCoordinator]
 
@@ -41,6 +44,9 @@ def _migrate_renamed_entities(hass: HomeAssistant, entry: LulisConfigEntry, addr
             # both exist (v0.1.0 created a duplicate): drop the duplicate, give its id back
             registry.async_remove(new_id)
         registry.async_update_entity(old_id, new_unique_id=f"{address}_{new}")
+    for platform, key in _REMOVED_KEYS:
+        if entity_id := registry.async_get_entity_id(platform, entry.domain, f"{address}_{key}"):
+            registry.async_remove(entity_id)
 
 
 async def _async_options_updated(hass: HomeAssistant, entry: LulisConfigEntry) -> None:

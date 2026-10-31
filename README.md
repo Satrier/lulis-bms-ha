@@ -45,7 +45,7 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 - 🧮 **Cells**: voltage of every cell, plus min, max and delta
 - 🌡️ **Temperatures**: T1, T2 and MOS
 - ⚡ **Energy dashboard**: *Energy charged* / *Energy discharged* in kWh, kept across restarts
-- 🎛️ **Control**: *Charging* and *Discharging* switches (charge/discharge MOS), *Restart BMS* button (disabled by default)
+- 🔌 **MOS state**: *Charge MOS* / *Discharge MOS* (read-only, see [below](#why-cant-i-switch-charging--discharging)), *Restart BMS* button (disabled by default)
 - 🚨 **Alarms**: *Alarm* and *Protection* sensors with the exact BMS reason (cell overvoltage, overheating, short circuit, …), plus a *Problem* binary sensor for automations
 - 🩺 **Health**: state of health, cycles, design capacity, raw status flags
 - 🧾 **Diagnostics** download with raw BMS frames and the protection thresholds (read-only)
@@ -53,7 +53,6 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 - 🔔 **Alerts blueprint** and a ready-made **dashboard**
 - 🌍 English and Ukrainian translations
 
-> ⚠️ Turning **Discharging** off cuts power to the load immediately.
 
 ## Supported batteries
 
@@ -69,6 +68,12 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 *Left: label of the tested pack. Right: the official LULIS BATTERY app showing the same BMS (`LK8625-…`, `LR359V13_N031x60A`).*
 
 Other LULIS packs with an `LK86xx` module will most likely work. If yours does too (or doesn't), please [open an issue](https://github.com/Satrier/lulis-bms-ha/issues/new/choose).
+
+## Why can't I switch charging / discharging?
+
+The BMS does have a control command (`0x3C`, the *Control* tab in the app), and the integration used to expose it as switches. On the tested pack (`LR359V13_N031x60A`) the BMS **acknowledges the command but keeps the MOS state**, for both turning discharge off and turning charge on. This BMS is built for e-motorcycles: discharge is most likely tied to the ignition (*ON*) wire, and charge to its own full-charge logic.
+
+So since 0.3.0 the MOS states are shown **read-only**. If the official app *can* switch them on your pack, please open an issue with a Bluetooth HCI snoop log.
 
 ## Options
 

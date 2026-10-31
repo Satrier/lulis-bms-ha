@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+
+- **Breaking:** the *Charging* / *Discharging* switches are removed. The LULIS BMS acknowledges the control command but never changes the MOS state. They are replaced by read-only *Charge MOS* / *Discharge MOS* binary sensors, and the old switch entities are removed automatically.
+
 ## 0.2.3
 
 - Minimum Home Assistant version is now **2026.10** (HACS won't offer the update on older versions).
