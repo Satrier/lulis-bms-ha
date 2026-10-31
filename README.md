@@ -2,6 +2,7 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 [![GitHub Release](https://img.shields.io/github/v/release/Satrier/lulis-bms-ha)](https://github.com/Satrier/lulis-bms-ha/releases)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.10%2B-41BDF5.svg)](https://www.home-assistant.io)
 [![Validate](https://github.com/Satrier/lulis-bms-ha/actions/workflows/validate.yml/badge.svg)](https://github.com/Satrier/lulis-bms-ha/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/Satrier/lulis-bms-ha)](https://github.com/Satrier/lulis-bms-ha/blob/main/LICENSE)
 
@@ -10,6 +11,8 @@ Monitor and control **LULIS lithium batteries** (e-motorcycle, golf cart and ene
 These batteries use a BMS with an **LK86xx (Telink) Bluetooth module** (BLE name `LK86xx-XXXXXX`), the same one the *LULIS BATTERY* app talks to. The integration uses Home Assistant's own Bluetooth stack, so it works with local adapters and with [ESPHome Bluetooth proxies](https://esphome.io/projects/?type=bluetooth).
 
 ## Install
+
+> Requires **Home Assistant 2026.10** or newer.
 
 [![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Satrier&repository=lulis-bms-ha&category=integration)
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3
+
+- Minimum Home Assistant version is now **2026.10** (HACS won't offer the update on older versions).
+
 ## 0.2.2
 
 - Fix: all entities were unavailable in 0.2.1 because of a wrong device-registry call (`async_get_device_by_identifier` needs the config entry id in HA 2026.10). Updating the device model/serial can no longer break polling.
