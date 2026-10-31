@@ -150,10 +150,14 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def _update_device_info(self, data: dict[str, Any]) -> None:
         if self._device_info_set or "model" not in data:
             return
-        registry = dr.async_get(self.hass)
-        if device := registry.async_get_device_by_identifier((DOMAIN, self.address)):
-            registry.async_update_device(device.id, model=data.get("model"), serial_number=data.get("serial"))
-            self._device_info_set = True
+        self._device_info_set = True  # cosmetic: never retry, never break polling
+        try:
+            registry = dr.async_get(self.hass)
+            for device in dr.async_entries_for_config_entry(registry, self.config_entry.entry_id):
+                if (DOMAIN, self.address) in device.identifiers:
+                    registry.async_update_device(device.id, model=data.get("model"), serial_number=data.get("serial"))
+        except Exception:
+            _LOGGER.debug("Could not update device info", exc_info=True)
 
     # --- diagnostics --------------------------------------------------------
 
