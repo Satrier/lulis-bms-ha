@@ -8,6 +8,7 @@ CHAR_TX = "00010203-0405-0607-0809-0a0b0c0dffe2"  # write:  host -> module
 
 NAME_PREFIX = "LK86"
 REPLY_TIMEOUT_S = 3.0
+DISCONNECT_TIMEOUT_S = 10.0
 
 # Options
 CONF_KEEP_CONNECTED = "keep_connected"

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 from datetime import timedelta
 import logging
 from typing import Any
@@ -26,6 +25,7 @@ from .const import (
     CONF_SCAN_INTERVAL,
     DEFAULT_KEEP_CONNECTED,
     DEFAULT_SCAN_INTERVAL,
+    DISCONNECT_TIMEOUT_S,
     DOMAIN,
     REPLY_TIMEOUT_S,
 )
@@ -210,7 +210,10 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             await self.async_refresh()
 
     async def async_disconnect(self) -> None:
+        """Drop the link. Never raises: a proxy may time out on the disconnect request."""
         client, self._client = self._client, None
         if client:
-            with contextlib.suppress(BleakError):
-                await client.disconnect()
+            try:
+                await asyncio.wait_for(client.disconnect(), DISCONNECT_TIMEOUT_S)
+            except Exception as err:
+                _LOGGER.debug("%s disconnect failed: %r", self.address, err)

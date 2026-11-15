@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2
+
+- Fix: changing the options (or unloading) could fail when a Bluetooth proxy timed out on the disconnect request, leaving every entity *Unavailable* until a restart. Disconnecting now never fails and gives up after 10 s.
+
 ## 0.5.1
 
 - Polling interval can now be up to **3600 s** (was 300 s). Without a permanent connection, polling every 15–60 minutes lets the BMS go idle between polls and reduces its self-drain (about 0.9 %/day with a permanent connection on the tested pack). See *Reducing self-drain* in the README.
