@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1
+
+- Polling interval can now be up to **3600 s** (was 300 s). Without a permanent connection, polling every 15–60 minutes lets the BMS go idle between polls and reduces its self-drain (about 0.9 %/day with a permanent connection on the tested pack). See *Reducing self-drain* in the README.
+- Energy counters keep integrating across long polling intervals (the gap limit is now 2.5 × the interval, at least 5 min).
+
 ## 0.5.0
 
 - **Sleep controls removed.** Measurements on the output terminals showed that the pack can't be put to sleep over Bluetooth: the status bit used by 0.4.0 (*Discharge MOS*) goes off and on while the output stays at 79–80 V. *Sleep BMS*, *Wake BMS* (fresh connection) and *Asleep* from 0.4.0 are removed automatically.

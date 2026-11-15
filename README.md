@@ -98,8 +98,14 @@ Version 0.4.0 had *Sleep BMS* / auto-sleep controls based on a status bit (syste
 | Option | Default | Notes |
 |---|---|---|
 | Keep Bluetooth connection open | on | Gives the freshest data and instant switching. Turn it off to connect only for each poll, so the phone app can connect in between (minimum interval 60 s). |
-| Polling interval | 30 s | 10–300 s |
+| Polling interval | 30 s | 10–3600 s |
 | Invert current sign | off | Turn on if *Current* is negative while charging. This also affects power and energy. |
+
+### Reducing self-drain
+
+While Home Assistant holds the Bluetooth link, the BMS stays in its active mode (the status bit shown as *Discharge MOS* is on). Without connections it drops to an idle mode 7–15 minutes later. On the tested pack, a permanent connection with 30 s polling cost about **0.9 % of charge per day** (~0.37 Ah, ~15 mA on average).
+
+If the pack sits idle for days, turn off **Keep Bluetooth connection open** and set the **Polling interval** to 900–3600 s (15–60 min). The data is then that old at most, but the BMS spends most of the time idle.
 
 ## Alerts
 

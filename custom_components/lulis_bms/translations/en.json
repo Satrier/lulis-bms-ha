@@ -151,7 +151,7 @@
     "step": {
       "init": {
         "title": "LULIS battery options",
-        "description": "**Keep connected** gives the freshest data and instant control, but the phone app cannot connect while Home Assistant holds the link. Turn it off to connect only for each poll (minimum interval 60 s; less reliable with a weak signal).",
+        "description": "**Keep connected** gives the freshest data and instant control, but the phone app cannot connect while Home Assistant holds the link. Turn it off to connect only for each poll (minimum interval 60 s; less reliable with a weak signal). Every connection keeps the BMS active for 7–15 minutes, so polling every 15–60 minutes without a permanent connection reduces its self-drain.",
         "data": {
           "keep_connected": "Keep Bluetooth connection open",
           "scan_interval": "Polling interval",

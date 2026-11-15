@@ -32,7 +32,7 @@ from .entity import LulisEntity
 from .protocol import ALARM_STATES, PROTECTION_STATES
 
 AH = "Ah"
-MAX_INTEGRATION_GAP_S = 300  # don't integrate energy across longer outages
+MIN_INTEGRATION_GAP_S = 300  # don't integrate energy across outages longer than this
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -219,12 +219,17 @@ class LulisEnergySensor(LulisEntity, RestoreSensor):
         if (last := await self.async_get_last_sensor_data()) and last.native_value is not None:
             self._attr_native_value = float(last.native_value)
 
+    def _max_gap(self) -> float:
+        # a missed poll or two is fine; longer gaps are outages
+        interval = self.coordinator.update_interval
+        return max(MIN_INTEGRATION_GAP_S, 2.5 * interval.total_seconds()) if interval else MIN_INTEGRATION_GAP_S
+
     @callback
     def _handle_coordinator_update(self) -> None:
         power = (self.coordinator.data or {}).get("power")
         now = time.monotonic()
         if power is not None and self.coordinator.last_update_success:
-            if self._last is not None and (dt := now - self._last[0]) <= MAX_INTEGRATION_GAP_S:
+            if self._last is not None and (dt := now - self._last[0]) <= self._max_gap():
                 p0 = max(self._sign * self._last[1], 0.0)
                 p1 = max(self._sign * power, 0.0)
                 total = float(self._attr_native_value or 0) + (p0 + p1) / 2 * dt / 3_600_000
