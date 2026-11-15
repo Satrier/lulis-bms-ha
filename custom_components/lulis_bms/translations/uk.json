@@ -139,14 +139,20 @@
       },
       "discharge_mos": {
         "name": "MOS розряду"
+      },
+      "asleep": {
+        "name": "Сон"
       }
     },
     "button": {
-      "restart": {
-        "name": "Розбудити / перезапустити BMS"
+      "wake": {
+        "name": "Розбудити BMS"
       },
       "sleep": {
-        "name": "Приспати BMS (експериментально)"
+        "name": "Приспати BMS"
+      },
+      "restart": {
+        "name": "Перезапустити BMS"
       }
     }
   },

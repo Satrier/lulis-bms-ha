@@ -223,7 +223,7 @@ class LulisEnergySensor(LulisEntity, RestoreSensor):
     def _handle_coordinator_update(self) -> None:
         power = (self.coordinator.data or {}).get("power")
         now = time.monotonic()
-        if power is not None and self.coordinator.last_update_success:
+        if power is not None and self.coordinator.last_update_success and not self.coordinator.asleep:
             if self._last is not None and (dt := now - self._last[0]) <= MAX_INTEGRATION_GAP_S:
                 p0 = max(self._sign * self._last[1], 0.0)
                 p1 = max(self._sign * power, 0.0)

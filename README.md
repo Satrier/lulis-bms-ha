@@ -45,7 +45,8 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 - 🧮 **Cells**: voltage of every cell, plus min, max and delta
 - 🌡️ **Temperatures**: T1, T2 and MOS
 - ⚡ **Energy dashboard**: *Energy charged* / *Energy discharged* in kWh, kept across restarts
-- 🔌 **MOS state**: *Charge MOS* / *Discharge MOS* (read-only, see [below](#why-cant-i-switch-charging--discharging)), *Wake / restart BMS* button, *Sleep BMS* button (experimental, disabled by default)
+- 🔌 **MOS state**: *Charge MOS* / *Discharge MOS* (read-only, see [below](#why-cant-i-switch-charging--discharging))
+- 💤 **Sleep / wake**: *Wake BMS* and *Sleep BMS* buttons, an *Asleep* sensor, and *Restart BMS* (MCU reset), see [Sleep and wake](#sleep-and-wake)
 - 🚨 **Alarms**: *Alarm* and *Protection* sensors with the exact BMS reason (cell overvoltage, overheating, short circuit, …), plus a *Problem* binary sensor for automations
 - 🩺 **Health**: state of health, cycles, design capacity, raw status flags
 - 🧾 **Diagnostics** download with raw BMS frames and the protection thresholds (read-only)
@@ -74,6 +75,16 @@ Other LULIS packs with an `LK86xx` module will most likely work. If yours does t
 The BMS does have a control command (`0x3C`, the *Control* tab in the app), and the integration used to expose it as switches. On the tested pack (`LR359V13_N031x60A`) the BMS **acknowledges the command but keeps the MOS state**, for both turning discharge off and turning charge on. This BMS is built for e-motorcycles: discharge is most likely tied to the ignition (*ON*) wire, and charge to its own full-charge logic.
 
 So since 0.3.0 the MOS states are shown **read-only**. If the official app *can* switch them on your pack, please open an issue with a Bluetooth HCI snoop log.
+
+## Sleep and wake
+
+The tested BMS (`LR359V13_N031x60A`) turns its output off by itself (discharge MOS off, about 37 V on the terminals) roughly **6 minutes** after a Bluetooth connection is opened while no current flows. **Every new BLE connection wakes it**: the discharge MOS turns back on about 3 seconds after connecting. The sleep slot of the control command (`0x3C`) is acknowledged but ignored.
+
+So the integration works with that behaviour:
+
+- **Sleep BMS** sends the sleep command anyway, drops the Bluetooth link and **stops polling**. The pack falls asleep a few minutes later. The *Asleep* sensor turns on, the other entities show *Unavailable*, and the state survives a Home Assistant restart.
+- **Wake BMS** opens a fresh connection (which wakes the pack), waits a few seconds and resumes polling.
+- **Restart BMS** resets the BMS MCU. Use it if *Wake* doesn't help.
 
 ## Options
 
@@ -110,7 +121,8 @@ The blueprint notifies you about BMS problems (alarm, protection or fault), low 
 | Phone app can't connect | Disable the integration entry while you use the app. |
 | Wrong or odd values | Attach **Download diagnostics** (device page → ⋮) to an issue. |
 | Energy counters swapped | Turn on **Invert current sign** in the options. |
-| Pack is asleep: output stays at about 37 V | Press **Wake / restart BMS** (same as *Control → Reset MCU → Open* in the app). The BMS reboots, the link drops for a few seconds, then reconnects. |
+| Pack is asleep: output stays at about 37 V | Press **Wake BMS**. If that doesn't help, **Restart BMS** (same as *Control → Reset MCU → Open* in the app). |
+| Pack keeps waking up | Every new Bluetooth connection wakes it. Press **Sleep BMS** so HA stops connecting, or close the phone app. |
 
 Debug logging:
 

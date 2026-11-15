@@ -139,14 +139,20 @@
       },
       "discharge_mos": {
         "name": "Discharge MOS"
+      },
+      "asleep": {
+        "name": "Asleep"
       }
     },
     "button": {
-      "restart": {
-        "name": "Wake / restart BMS"
+      "wake": {
+        "name": "Wake BMS"
       },
       "sleep": {
-        "name": "Sleep BMS (experimental)"
+        "name": "Sleep BMS"
+      },
+      "restart": {
+        "name": "Restart BMS"
       }
     }
   },

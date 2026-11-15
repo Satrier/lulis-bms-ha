@@ -1,4 +1,4 @@
-"""Wake / restart and (experimental) sleep buttons for LULIS BMS."""
+"""Wake, sleep and restart buttons for LULIS BMS."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from . import LulisConfigEntry
 from .coordinator import LulisCoordinator
 from .entity import LulisEntity
-from .protocol import CTL_RESET, CTL_SLEEP
+from .protocol import CTL_RESET
 
 
 class LulisRestartButton(LulisEntity, ButtonEntity):
@@ -34,28 +34,46 @@ class LulisRestartButton(LulisEntity, ButtonEntity):
         return True
 
     async def async_press(self) -> None:
+        if self.coordinator.asleep:
+            await self.coordinator.async_wake()
         await self.coordinator.async_control(CTL_RESET, True, refresh=False, require_ack=False)
         await self.coordinator.async_disconnect()
 
 
-class LulisSleepButton(LulisEntity, ButtonEntity):
-    """Experimental: sets the Control (0x3C) sleep slot.
+class LulisWakeButton(LulisEntity, ButtonEntity):
+    """Wakes a sleeping pack: a fresh BLE connection turns the discharge MOS on."""
 
-    Hidden in the app's UI and untested on LULIS packs. The hope is that it puts
-    the BMS into the same sleep (output off, ~37 V) that Wake / restart leaves.
-    Disabled by default; the ack and the MOS state are logged at debug level.
+    _attr_translation_key = "wake"
+
+    def __init__(self, coordinator: LulisCoordinator) -> None:
+        super().__init__(coordinator, "wake")
+
+    @property
+    def available(self) -> bool:
+        return True  # needed exactly while polling is stopped or failing
+
+    async def async_press(self) -> None:
+        await self.coordinator.async_wake()
+
+
+class LulisSleepButton(LulisEntity, ButtonEntity):
+    """Lets the pack fall asleep: HA disconnects and stops polling until Wake.
+
+    The BMS ignores the sleep command itself; it turns its output off a few
+    minutes after the last BLE connection, and any reconnect wakes it again.
     """
 
-    _attr_entity_category = EntityCategory.CONFIG
-    _attr_entity_registry_enabled_default = False
     _attr_translation_key = "sleep"
 
     def __init__(self, coordinator: LulisCoordinator) -> None:
         super().__init__(coordinator, "sleep")
 
+    @property
+    def available(self) -> bool:
+        return True
+
     async def async_press(self) -> None:
-        # a sleeping MCU may not answer; refresh afterwards shows the MOS state (or none)
-        await self.coordinator.async_control(CTL_SLEEP, True, require_ack=False)
+        await self.coordinator.async_sleep()
 
 
 async def async_setup_entry(
@@ -63,4 +81,5 @@ async def async_setup_entry(
     entry: LulisConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    async_add_entities([LulisRestartButton(entry.runtime_data), LulisSleepButton(entry.runtime_data)])
+    c = entry.runtime_data
+    async_add_entities([LulisWakeButton(c), LulisSleepButton(c), LulisRestartButton(c)])

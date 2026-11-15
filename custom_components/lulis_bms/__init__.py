@@ -6,7 +6,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.storage import Store
 
+from .const import DOMAIN
 from .coordinator import LulisCoordinator
 
 PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.SENSOR]
@@ -18,16 +20,21 @@ _RENAMED_KEYS = (("sensor", "temp_3", "temp_mos"),)
 _REMOVED_KEYS = (("switch", "charge_mos"), ("switch", "discharge_mos"))
 # entities that used to be disabled by default and are now needed: (platform, suffix)
 # 0.3.1: the restart button is what wakes a sleeping pack
-_ENABLED_KEYS = (("button", "restart"),)
+# 0.4.0: sleep works (by leaving the BMS alone) and is a main control
+_ENABLED_KEYS = (("button", "restart"), ("button", "sleep"))
+# entity_ids that carried a name suffix which is gone: (platform, unique_id suffix, old ending)
+_RENAMED_IDS = (("button", "sleep", "_experimental"),)
 
 type LulisConfigEntry = ConfigEntry[LulisCoordinator]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: LulisConfigEntry) -> bool:
     coordinator = LulisCoordinator(hass, entry)
+    await coordinator.async_load_state()
     # BLE links to batteries are often weak: don't block setup on the first poll,
     # entities simply stay unavailable until the battery answers.
-    await coordinator.async_refresh()
+    if not coordinator.asleep:  # connecting would wake a sleeping pack
+        await coordinator.async_refresh()
     entry.runtime_data = coordinator
 
     _migrate_renamed_entities(hass, entry, coordinator.address)
@@ -55,10 +62,21 @@ def _migrate_renamed_entities(hass: HomeAssistant, entry: LulisConfigEntry, addr
         entry_ = registry.async_get(entity_id) if entity_id else None
         if entry_ and entry_.disabled_by is er.RegistryEntryDisabler.INTEGRATION:
             registry.async_update_entity(entity_id, disabled_by=None)
+    for platform, key, ending in _RENAMED_IDS:
+        entity_id = registry.async_get_entity_id(platform, entry.domain, f"{address}_{key}")
+        if entity_id and entity_id.endswith(ending):
+            new_id = entity_id.removesuffix(ending)
+            if registry.async_is_registered(new_id):
+                continue
+            registry.async_update_entity(entity_id, new_entity_id=new_id)
 
 
 async def _async_options_updated(hass: HomeAssistant, entry: LulisConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: LulisConfigEntry) -> None:
+    await Store(hass, 1, f"{DOMAIN}.{entry.entry_id}").async_remove()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: LulisConfigEntry) -> bool:

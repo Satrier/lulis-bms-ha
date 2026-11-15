@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0
+
+- **Sleep / wake that actually work.** Tests on a LULIS pack showed that the BMS ignores the sleep command but wakes up on every new Bluetooth connection, and falls asleep by itself a few minutes later. So:
+  - **Sleep BMS** (enabled by default, no longer experimental or under *Configuration*) drops the link and stops polling until you wake the pack. The state survives restarts.
+  - New **Wake BMS** button: opens a fresh connection, which wakes the pack, then resumes polling.
+  - New **Asleep** binary sensor. While asleep, the other entities are *Unavailable* instead of showing stale values.
+  - *Wake / restart BMS* is now **Restart BMS** (MCU reset).
+- The old `button.…_sleep_bms_experimental` entity id becomes `button.…_sleep_bms`.
+- Example dashboard: sleep / wake controls.
+
 ## 0.3.1
 
 - *Restart BMS* is now **Wake / restart BMS** and enabled by default (also on existing installs). It sends the app's *Reset MCU → Open*, which wakes a sleeping pack whose output is stuck at ~37 V.

@@ -16,6 +16,7 @@ from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -28,10 +29,12 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     REPLY_TIMEOUT_S,
+    WAKE_SETTLE_S,
 )
 from .protocol import (
     CMD_CONTROL,
     CMD_PACK,
+    CTL_SLEEP,
     POLL_COMMANDS,
     STATIC_COMMANDS,
     THRESHOLDS,
@@ -70,6 +73,19 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._lock = asyncio.Lock()
         self._static: dict[int, bytes] = {}
         self._device_info_set = False
+        self._interval = self.update_interval
+        # Any new BLE connection wakes the BMS, so "asleep" means: HA stays off the link.
+        self.asleep = False
+        self._store: Store[dict[str, Any]] = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}")
+
+    async def async_load_state(self) -> None:
+        """Restore the sleep state, so a HA restart doesn't wake a sleeping pack."""
+        if (stored := await self._store.async_load()) and stored.get("asleep"):
+            self._set_asleep(True)
+
+    def _set_asleep(self, asleep: bool) -> None:
+        self.asleep = asleep
+        self.update_interval = None if asleep else self._interval
 
     # --- BLE plumbing -------------------------------------------------------
 
@@ -121,6 +137,9 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     # --- polling ------------------------------------------------------------
 
     async def _async_update_data(self) -> dict[str, Any]:
+        if self.asleep:
+            # e.g. homeassistant.update_entity: connecting would wake the pack
+            return self.data or {}
         async with self._lock:
             try:
                 client = await self._ensure_connected()
@@ -208,6 +227,40 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if refresh:
             await asyncio.sleep(1)
             await self.async_refresh()
+
+    # --- sleep / wake -------------------------------------------------------
+
+    async def async_sleep(self) -> None:
+        """Let the pack fall asleep: drop the link and stop polling.
+
+        The BMS acks the sleep slot of 0x3C but ignores it; it falls asleep by itself
+        (discharge MOS off, output ~37 V) a few minutes after the last BLE connection
+        was opened. Every new connection wakes it again, so HA must stay away.
+        """
+        try:
+            # harmless, and may work on other firmware
+            await self.async_control(CTL_SLEEP, True, refresh=False, require_ack=False)
+        except HomeAssistantError as err:
+            _LOGGER.debug("%s sleep command not sent: %s", self.address, err)
+        await self.async_disconnect()
+        self._set_asleep(True)
+        await self._store.async_save({"asleep": True})
+        self.async_update_listeners()
+
+    async def async_wake(self) -> None:
+        """Wake the pack by opening a fresh BLE connection, then resume polling."""
+        self._set_asleep(False)
+        await self._store.async_save({"asleep": False})
+        async with self._lock:
+            await self.async_disconnect()  # only a *new* connection wakes the BMS
+            try:
+                await self._ensure_connected()
+            except (BleakError, TimeoutError, UpdateFailed) as err:
+                await self.async_disconnect()
+                self.async_update_listeners()
+                raise HomeAssistantError(f"Battery not reachable: {err}") from err
+        await asyncio.sleep(WAKE_SETTLE_S)  # the discharge MOS turns on ~3 s after connecting
+        await self.async_refresh()
 
     async def async_disconnect(self) -> None:
         client, self._client = self._client, None

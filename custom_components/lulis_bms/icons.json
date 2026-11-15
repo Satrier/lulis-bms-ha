@@ -1,6 +1,9 @@
 {
   "entity": {
     "button": {
+      "wake": {
+        "default": "mdi:power"
+      },
       "sleep": {
         "default": "mdi:sleep"
       }
@@ -69,6 +72,12 @@
         "default": "mdi:battery-arrow-down",
         "state": {
           "off": "mdi:battery-off-outline"
+        }
+      },
+      "asleep": {
+        "default": "mdi:sleep",
+        "state": {
+          "off": "mdi:sleep-off"
         }
       }
     }

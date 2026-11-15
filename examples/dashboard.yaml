@@ -28,6 +28,20 @@ sections:
         entity: binary_sensor.lulis_battery_charge_mos
       - type: tile
         entity: binary_sensor.lulis_battery_discharge_mos
+      - type: tile
+        entity: binary_sensor.lulis_battery_asleep
+      - type: tile
+        entity: button.lulis_battery_wake_bms
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target: { entity_id: button.lulis_battery_wake_bms }
+      - type: tile
+        entity: button.lulis_battery_sleep_bms
+        tap_action:
+          action: perform-action
+          perform_action: button.press
+          target: { entity_id: button.lulis_battery_sleep_bms }
   - type: grid
     cards:
       - type: entities
