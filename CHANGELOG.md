@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1
+
+- *Restart BMS* is now **Wake / restart BMS** and enabled by default (also on existing installs). It sends the app's *Reset MCU → Open*, which wakes a sleeping pack whose output is stuck at ~37 V.
+- The button no longer shows an error when the MCU resets without answering the command.
+- **Sleep BMS (experimental)** button, disabled by default: sets the hidden *sleep* slot of the control command. Untested on LULIS packs; please report whether the output turns off.
+- README: troubleshooting for a sleeping pack.
+
 ## 0.3.0
 
 - **Breaking:** the *Charging* / *Discharging* switches are removed. The LULIS BMS acknowledges the control command but never changes the MOS state. They are replaced by read-only *Charge MOS* / *Discharge MOS* binary sensors, and the old switch entities are removed automatically.

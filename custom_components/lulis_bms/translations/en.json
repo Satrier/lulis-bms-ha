@@ -143,7 +143,10 @@
     },
     "button": {
       "restart": {
-        "name": "Restart BMS"
+        "name": "Wake / restart BMS"
+      },
+      "sleep": {
+        "name": "Sleep BMS (experimental)"
       }
     }
   },

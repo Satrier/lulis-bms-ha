@@ -16,6 +16,9 @@ _RENAMED_KEYS = (("sensor", "temp_3", "temp_mos"),)
 # entities removed in later versions: (platform, unique_id suffix)
 # 0.3.0: MOS switches dropped, the BMS acknowledges but ignores 0x3C on LULIS packs
 _REMOVED_KEYS = (("switch", "charge_mos"), ("switch", "discharge_mos"))
+# entities that used to be disabled by default and are now needed: (platform, suffix)
+# 0.3.1: the restart button is what wakes a sleeping pack
+_ENABLED_KEYS = (("button", "restart"),)
 
 type LulisConfigEntry = ConfigEntry[LulisCoordinator]
 
@@ -47,6 +50,11 @@ def _migrate_renamed_entities(hass: HomeAssistant, entry: LulisConfigEntry, addr
     for platform, key in _REMOVED_KEYS:
         if entity_id := registry.async_get_entity_id(platform, entry.domain, f"{address}_{key}"):
             registry.async_remove(entity_id)
+    for platform, key in _ENABLED_KEYS:
+        entity_id = registry.async_get_entity_id(platform, entry.domain, f"{address}_{key}")
+        entry_ = registry.async_get(entity_id) if entity_id else None
+        if entry_ and entry_.disabled_by is er.RegistryEntryDisabler.INTEGRATION:
+            registry.async_update_entity(entity_id, disabled_by=None)
 
 
 async def _async_options_updated(hass: HomeAssistant, entry: LulisConfigEntry) -> None:

@@ -45,7 +45,7 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 - 🧮 **Cells**: voltage of every cell, plus min, max and delta
 - 🌡️ **Temperatures**: T1, T2 and MOS
 - ⚡ **Energy dashboard**: *Energy charged* / *Energy discharged* in kWh, kept across restarts
-- 🔌 **MOS state**: *Charge MOS* / *Discharge MOS* (read-only, see [below](#why-cant-i-switch-charging--discharging)), *Restart BMS* button (disabled by default)
+- 🔌 **MOS state**: *Charge MOS* / *Discharge MOS* (read-only, see [below](#why-cant-i-switch-charging--discharging)), *Wake / restart BMS* button, *Sleep BMS* button (experimental, disabled by default)
 - 🚨 **Alarms**: *Alarm* and *Protection* sensors with the exact BMS reason (cell overvoltage, overheating, short circuit, …), plus a *Problem* binary sensor for automations
 - 🩺 **Health**: state of health, cycles, design capacity, raw status flags
 - 🧾 **Diagnostics** download with raw BMS frames and the protection thresholds (read-only)
@@ -110,7 +110,7 @@ The blueprint notifies you about BMS problems (alarm, protection or fault), low 
 | Phone app can't connect | Disable the integration entry while you use the app. |
 | Wrong or odd values | Attach **Download diagnostics** (device page → ⋮) to an issue. |
 | Energy counters swapped | Turn on **Invert current sign** in the options. |
-| *Restart BMS* | The BMS reboots and the link drops for a few seconds, then reconnects. |
+| Pack is asleep: output stays at about 37 V | Press **Wake / restart BMS** (same as *Control → Reset MCU → Open* in the app). The BMS reboots, the link drops for a few seconds, then reconnects. |
 
 Debug logging:
 

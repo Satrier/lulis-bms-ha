@@ -179,8 +179,12 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     # --- control ------------------------------------------------------------
 
-    async def async_control(self, slot: int, on: bool, refresh: bool = True) -> None:
-        """Send a Control (0x3C) command, check the ack, then refresh state."""
+    async def async_control(self, slot: int, on: bool, refresh: bool = True, require_ack: bool = True) -> None:
+        """Send a Control (0x3C) command, check the ack, then refresh state.
+
+        With require_ack=False a missing reply is only logged: a sleeping or
+        rebooting MCU may act on the command without answering it.
+        """
         frame = build_control(slot, on)
         async with self._lock:
             try:
@@ -194,7 +198,10 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         flag = self._parser.flags.get(CMD_CONTROL)
         _LOGGER.debug("%s control TX %s -> ack flag=%s payload=%s", self.address, frame.hex(), flag, ack and ack.hex())
         if ack is None:
-            raise HomeAssistantError("The battery did not answer the command")
+            if require_ack:
+                raise HomeAssistantError("The battery did not answer the command")
+            _LOGGER.debug("%s no ack for control %s (expected while the MCU resets)", self.address, frame.hex())
+            return
         if not write_accepted(flag, ack):
             _LOGGER.warning("%s rejected control %s (flag=%s payload=%s)", self.address, frame.hex(), flag, ack.hex())
             raise HomeAssistantError(f"The BMS rejected the command (flag={flag}, reply={ack.hex()})")

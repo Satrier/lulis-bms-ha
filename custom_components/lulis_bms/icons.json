@@ -1,5 +1,10 @@
 {
   "entity": {
+    "button": {
+      "sleep": {
+        "default": "mdi:sleep"
+      }
+    },
     "sensor": {
       "remaining": {
         "default": "mdi:battery-clock"
