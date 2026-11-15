@@ -13,11 +13,9 @@ from bleak_retry_connector import BleakClientWithServiceCache, establish_connect
 from homeassistant.components import bluetooth
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ADDRESS
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.event import async_call_later
-from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -30,10 +28,6 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     REPLY_TIMEOUT_S,
-    SLEEP_ASLEEP,
-    SLEEP_AWAKE,
-    SLEEP_FALLING,
-    WAKE_SETTLE_S,
 )
 from .protocol import (
     CMD_CONTROL,
@@ -76,72 +70,6 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._lock = asyncio.Lock()
         self._static: dict[int, bytes] = {}
         self._device_info_set = False
-        self._interval = self.update_interval
-        # Any new BLE connection wakes the BMS (discharge MOS on, 79-80 V on the output).
-        # It falls asleep by itself (MOS off, ~37 V) ~6-7 min later if idle, also while
-        # connected. So to sleep, HA must stop opening new connections.
-        self.sleep_state = SLEEP_AWAKE
-        self.auto_sleep_min = 0
-        self._auto_sleep_unsub: CALLBACK_TYPE | None = None
-        self._store: Store[dict[str, Any]] = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}")
-
-    @property
-    def asleep(self) -> bool:
-        return self.sleep_state == SLEEP_ASLEEP
-
-    async def async_load_state(self) -> None:
-        """Restore sleep state and timer, so a HA restart doesn't wake a sleeping pack."""
-        stored = await self._store.async_load() or {}
-        self.auto_sleep_min = int(stored.get("auto_sleep_min", 0))
-        # the link is gone after a restart, so "falling asleep" ends as "asleep"
-        if stored.get("asleep") or stored.get("sleep_state") in (SLEEP_ASLEEP, SLEEP_FALLING):
-            self._set_state(SLEEP_ASLEEP)
-        else:
-            self._schedule_auto_sleep()
-
-    async def _async_save(self) -> None:
-        await self._store.async_save({"sleep_state": self.sleep_state, "auto_sleep_min": self.auto_sleep_min})
-
-    def _set_state(self, state: str) -> None:
-        self.sleep_state = state
-        self.update_interval = None if state == SLEEP_ASLEEP else self._interval
-        if state != SLEEP_AWAKE:
-            self._cancel_auto_sleep()
-
-    async def _async_go_asleep(self, reason: str) -> None:
-        _LOGGER.debug("%s asleep: %s", self.address, reason)
-        await self.async_disconnect()
-        self._set_state(SLEEP_ASLEEP)
-        await self._async_save()
-        self.async_update_listeners()
-
-    # --- auto sleep timer ---------------------------------------------------
-
-    def _cancel_auto_sleep(self) -> None:
-        if self._auto_sleep_unsub:
-            self._auto_sleep_unsub()
-            self._auto_sleep_unsub = None
-
-    def _schedule_auto_sleep(self) -> None:
-        self._cancel_auto_sleep()
-        if self.sleep_state == SLEEP_AWAKE and self.auto_sleep_min > 0:
-            self._auto_sleep_unsub = async_call_later(self.hass, self.auto_sleep_min * 60, self._auto_sleep_fired)
-
-    @callback
-    def _auto_sleep_fired(self, _now: Any) -> None:
-        self._auto_sleep_unsub = None
-        self.config_entry.async_create_background_task(self.hass, self.async_sleep(), "lulis_bms auto sleep")
-
-    async def async_set_auto_sleep(self, minutes: int) -> None:
-        """Set the auto-sleep delay (0 = off); the countdown restarts now."""
-        self.auto_sleep_min = minutes
-        self._schedule_auto_sleep()
-        await self._async_save()
-        self.async_update_listeners()
-
-    async def async_shutdown(self) -> None:
-        self._cancel_auto_sleep()
-        await super().async_shutdown()
 
     # --- BLE plumbing -------------------------------------------------------
 
@@ -193,21 +121,9 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     # --- polling ------------------------------------------------------------
 
     async def _async_update_data(self) -> dict[str, Any]:
-        if self.asleep:
-            # e.g. homeassistant.update_entity: connecting would wake the pack
-            return self.data or {}
-        if self.sleep_state == SLEEP_FALLING and not (self._client and self._client.is_connected):
-            # a new connection would wake it again: stop here, it falls asleep on its own
-            await self._async_go_asleep("link lost while falling asleep")
-            return self.data or {}
         async with self._lock:
             try:
-                if self.sleep_state == SLEEP_FALLING:
-                    if not (self._client and self._client.is_connected):  # dropped meanwhile
-                        raise UpdateFailed("Link lost while falling asleep")
-                    client = self._client  # never reconnect: that would wake the pack
-                else:
-                    client = await self._ensure_connected()
+                client = await self._ensure_connected()
                 frames: dict[int, bytes] = dict(self._static)
                 for cmd in STATIC_COMMANDS:
                     if cmd not in self._static and (p := await self._transact(client, cmd, build_read(cmd))):
@@ -229,8 +145,6 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data["current"] = -data["current"]
             data["power"] = -data["power"]
         self._update_device_info(data)
-        if self.sleep_state == SLEEP_FALLING and data.get("discharge_mos") is False:
-            await self._async_go_asleep("discharge MOS off, output ~37 V")
         return data
 
     def _update_device_info(self, data: dict[str, Any]) -> None:
@@ -294,41 +208,6 @@ class LulisCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if refresh:
             await asyncio.sleep(1)
             await self.async_refresh()
-
-    # --- sleep / wake -------------------------------------------------------
-
-    async def async_sleep(self) -> None:
-        """Let the pack fall asleep without waking it again.
-
-        The sleep slot of 0x3C is acked but ignored, so nothing is sent. If HA holds
-        the link, it keeps polling over it (no reconnects) until the BMS turns the
-        discharge MOS off, then disconnects. Without a link it just stops polling.
-        """
-        self._cancel_auto_sleep()
-        if self.asleep:
-            return
-        if self._client and self._client.is_connected:
-            self._set_state(SLEEP_FALLING)
-            await self._async_save()
-            self.async_update_listeners()
-        else:
-            await self._async_go_asleep("no link, stopped polling")
-
-    async def async_wake(self) -> None:
-        """Wake the pack by opening a fresh BLE connection, then resume polling."""
-        self._set_state(SLEEP_AWAKE)
-        await self._async_save()
-        async with self._lock:
-            await self.async_disconnect()  # only a *new* connection wakes the BMS
-            try:
-                await self._ensure_connected()
-            except (BleakError, TimeoutError, UpdateFailed) as err:
-                await self.async_disconnect()
-                self.async_update_listeners()
-                raise HomeAssistantError(f"Battery not reachable: {err}") from err
-        await asyncio.sleep(WAKE_SETTLE_S)  # the discharge MOS turns on ~3 s after connecting
-        await self.async_refresh()
-        self._schedule_auto_sleep()
 
     async def async_disconnect(self) -> None:
         client, self._client = self._client, None

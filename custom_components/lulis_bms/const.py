@@ -8,7 +8,6 @@ CHAR_TX = "00010203-0405-0607-0809-0a0b0c0dffe2"  # write:  host -> module
 
 NAME_PREFIX = "LK86"
 REPLY_TIMEOUT_S = 3.0
-WAKE_SETTLE_S = 5.0  # BMS turns the discharge MOS on ~3 s after a BLE connection
 
 # Options
 CONF_KEEP_CONNECTED = "keep_connected"
@@ -20,10 +19,3 @@ DEFAULT_SCAN_INTERVAL = 30
 MIN_SCAN_INTERVAL = 10
 MIN_SCAN_INTERVAL_DISCONNECTED = 60
 MAX_SCAN_INTERVAL = 300
-
-# Sleep state (sensor "sleep_state")
-SLEEP_AWAKE = "awake"
-SLEEP_FALLING = "falling_asleep"
-SLEEP_ASLEEP = "asleep"
-SLEEP_STATES = (SLEEP_AWAKE, SLEEP_FALLING, SLEEP_ASLEEP)
-MAX_AUTO_SLEEP_MIN = 720

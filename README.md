@@ -46,7 +46,7 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 - 🌡️ **Temperatures**: T1, T2 and MOS
 - ⚡ **Energy dashboard**: *Energy charged* / *Energy discharged* in kWh, kept across restarts
 - 🔌 **MOS state**: *Charge MOS* / *Discharge MOS* (read-only, see [below](#why-cant-i-switch-charging--discharging))
-- 💤 **Sleep / wake**: *Wake BMS* and *Sleep BMS* buttons, a *Sleep* state sensor, an *Auto sleep after* timer and *Restart BMS* (MCU reset), see [Sleep and wake](#sleep-and-wake)
+- 💤 **Wake BMS** button: wakes a pack whose output is asleep at ~37 V, see [Sleep and wake](#sleep-and-wake)
 - 🚨 **Alarms**: *Alarm* and *Protection* sensors with the exact BMS reason (cell overvoltage, overheating, short circuit, …), plus a *Problem* binary sensor for automations
 - 🩺 **Health**: state of health, cycles, design capacity, raw status flags
 - 🧾 **Diagnostics** download with raw BMS frames and the protection thresholds (read-only)
@@ -84,23 +84,12 @@ So since 0.3.0 the MOS states are shown **read-only**. If the official app *can*
 
 ## Sleep and wake
 
-On the tested BMS (`LR359V13_N031x60A`) the output has two levels:
+The pack can go into a sleep where the **output terminals show about 37 V** instead of the pack voltage (79–80 V on the tested 72 V pack). The *Voltage* sensor is the pack voltage and does not show this.
 
-| State | Discharge MOS | Output terminals |
-|---|---|---|
-| awake | on | 79–80 V (pack voltage) |
-| asleep | off | about 37 V |
+- **Wake BMS** resets the BMS MCU (the app's *Control → Reset MCU → Open*). This wakes the pack from that sleep: the output goes back to 79–80 V. The Bluetooth link drops for a few seconds, then reconnects.
+- **There is no way to put the pack to sleep over Bluetooth.** The BMS acknowledges the sleep slot of the control command (`0x3C`) but ignores it, and leaving it without any connection for 30+ minutes didn't do it either. What makes it sleep is unknown (long idle time?). If you find out, please open an issue.
 
-The *Voltage* sensor is the pack voltage and stays at ~80 V either way; the *Discharge MOS* sensor tells the two apart.
-
-The BMS falls asleep **by itself about 6–7 minutes after a Bluetooth connection is opened** while no current flows, even if the connection stays open. **Every new connection wakes it** about 3 seconds later. The sleep slot of the control command (`0x3C`) is acknowledged but ignored. The integration works with that:
-
-- **Sleep BMS**: HA stops opening new connections. If the link is open, HA keeps polling over it and the *Sleep* sensor shows *Falling asleep* until the discharge MOS turns off, then disconnects (*Asleep (output off)*). Without a link it stops right away and the pack falls asleep a few minutes later. While asleep the other entities are *Unavailable*, and the state survives a Home Assistant restart.
-- **Wake BMS**: opens a fresh connection (which wakes the pack), waits a few seconds and resumes polling.
-- **Auto sleep after** (minutes, 0 = off): presses *Sleep BMS* automatically that long after a wake, a restart of Home Assistant, or a change of the value.
-- **Restart BMS**: resets the BMS MCU. Use it if *Wake* doesn't help.
-
-The phone app wakes the pack too: every connection does.
+Version 0.4.0 had *Sleep BMS* / auto-sleep controls based on a status bit (system flags byte, bit 7, shown as *Discharge MOS*). That bit turns off 7–15 minutes after the last connection and back on when HA connects, **but the output stays at 79–80 V either way**, so those controls were removed in 0.5.0.
 
 ## Options
 
@@ -137,8 +126,7 @@ The blueprint notifies you about BMS problems (alarm, protection or fault), low 
 | Phone app can't connect | Disable the integration entry while you use the app. |
 | Wrong or odd values | Attach **Download diagnostics** (device page → ⋮) to an issue. |
 | Energy counters swapped | Turn on **Invert current sign** in the options. |
-| Pack is asleep: output stays at about 37 V | Press **Wake BMS**. If that doesn't help, **Restart BMS** (same as *Control → Reset MCU → Open* in the app). |
-| Pack keeps waking up | Every new Bluetooth connection wakes it. Press **Sleep BMS** so HA stops connecting, or close the phone app. |
+| Pack is asleep: output stays at about 37 V | Press **Wake BMS** (same as *Control → Reset MCU → Open* in the app). |
 
 Debug logging:
 

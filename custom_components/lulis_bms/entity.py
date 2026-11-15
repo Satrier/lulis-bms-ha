@@ -27,8 +27,3 @@ class LulisEntity(CoordinatorEntity[LulisCoordinator]):
             model=data.get("model"),
             serial_number=data.get("serial"),
         )
-
-    @property
-    def available(self) -> bool:
-        # while asleep HA doesn't poll: show "unavailable" rather than stale values
-        return super().available and not self.coordinator.asleep

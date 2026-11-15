@@ -27,7 +27,6 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import LulisConfigEntry
-from .const import SLEEP_STATES
 from .coordinator import LulisCoordinator
 from .entity import LulisEntity
 from .protocol import ALARM_STATES, PROTECTION_STATES
@@ -224,7 +223,7 @@ class LulisEnergySensor(LulisEntity, RestoreSensor):
     def _handle_coordinator_update(self) -> None:
         power = (self.coordinator.data or {}).get("power")
         now = time.monotonic()
-        if power is not None and self.coordinator.last_update_success and not self.coordinator.asleep:
+        if power is not None and self.coordinator.last_update_success:
             if self._last is not None and (dt := now - self._last[0]) <= MAX_INTEGRATION_GAP_S:
                 p0 = max(self._sign * self._last[1], 0.0)
                 p1 = max(self._sign * power, 0.0)
@@ -234,25 +233,6 @@ class LulisEnergySensor(LulisEntity, RestoreSensor):
         else:
             self._last = None
         super()._handle_coordinator_update()
-
-
-class LulisSleepStateSensor(LulisEntity, SensorEntity):
-    """awake / falling_asleep / asleep (asleep = discharge MOS off, ~37 V on the output)."""
-
-    _attr_device_class = SensorDeviceClass.ENUM
-    _attr_translation_key = "sleep_state"
-
-    def __init__(self, coordinator: LulisCoordinator) -> None:
-        super().__init__(coordinator, "sleep_state")
-        self._attr_options = list(SLEEP_STATES)
-
-    @property
-    def available(self) -> bool:
-        return True
-
-    @property
-    def native_value(self) -> str:
-        return self.coordinator.sleep_state
 
 
 async def async_setup_entry(
@@ -287,5 +267,4 @@ async def async_setup_entry(
     # BMS convention: positive current = charging (option "invert current" flips it)
     entities.append(LulisEnergySensor(coordinator, "energy_charged", +1))
     entities.append(LulisEnergySensor(coordinator, "energy_discharged", -1))
-    entities.append(LulisSleepStateSensor(coordinator))
     async_add_entities(entities)

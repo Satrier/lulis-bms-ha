@@ -128,14 +128,6 @@
           "low_voltage_charge_lock": "Низька напруга, заряд заборонено",
           "short_circuit": "Захист від короткого замикання"
         }
-      },
-      "sleep_state": {
-        "name": "Сон",
-        "state": {
-          "awake": "Не спить (вихід увімкнено)",
-          "falling_asleep": "Засинає",
-          "asleep": "Спить (вихід вимкнено)"
-        }
       }
     },
     "binary_sensor": {
@@ -152,17 +144,6 @@
     "button": {
       "wake": {
         "name": "Розбудити BMS"
-      },
-      "sleep": {
-        "name": "Приспати BMS"
-      },
-      "restart": {
-        "name": "Перезапустити BMS"
-      }
-    },
-    "number": {
-      "auto_sleep": {
-        "name": "Автосон через"
       }
     }
   },

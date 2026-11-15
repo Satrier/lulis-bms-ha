@@ -2,12 +2,13 @@
 
 ## 0.5.0
 
-- **Sleep is confirmed**: *Sleep BMS* no longer drops an open link. HA keeps polling over it, without reconnecting, until the BMS turns the discharge MOS off (output ~37 V), then disconnects. Without a link it stops polling right away.
-- New **Sleep** sensor: *Awake (output on)* / *Falling asleep* / *Asleep (output off)*. It replaces the *Asleep* binary sensor from 0.4.0, which is removed automatically.
-- New **Auto sleep after** number (minutes, 0 = off): presses *Sleep BMS* that long after a wake or a restart.
-- The ignored sleep command is no longer sent.
+- **Sleep controls removed.** Measurements on the output terminals showed that the pack can't be put to sleep over Bluetooth: the status bit used by 0.4.0 (*Discharge MOS*) goes off and on while the output stays at 79–80 V. *Sleep BMS*, *Wake BMS* (fresh connection) and *Asleep* from 0.4.0 are removed automatically.
+- **Wake BMS** is the only control: it resets the BMS MCU, which is what really wakes a pack whose output is asleep at ~37 V. It keeps the entity id of the former *Restart BMS* button (`button.…_restart_bms`) and is no longer under *Configuration*.
+- README: what is known about sleep and wake.
 
 ## 0.4.0
+
+> Superseded by 0.5.0: the sleep detection below turned out to be wrong.
 
 - **Sleep / wake that actually work.** Tests on a LULIS pack showed that the BMS ignores the sleep command but wakes up on every new Bluetooth connection, and falls asleep by itself a few minutes later. So:
   - **Sleep BMS** (enabled by default, no longer experimental or under *Configuration*) drops the link and stops polling until you wake the pack. The state survives restarts.

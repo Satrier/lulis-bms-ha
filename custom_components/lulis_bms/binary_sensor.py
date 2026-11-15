@@ -1,4 +1,4 @@
-"""Binary sensors for LULIS BMS: problem and MOS states (read-only)."""
+"""Binary sensors for LULIS BMS: problem + MOS states (read-only)."""
 
 from __future__ import annotations
 
@@ -59,10 +59,4 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     c = entry.runtime_data
-    async_add_entities(
-        [
-            LulisProblemSensor(c),
-            LulisMosSensor(c, "charge_mos"),
-            LulisMosSensor(c, "discharge_mos"),
-        ]
-    )
+    async_add_entities([LulisProblemSensor(c), LulisMosSensor(c, "charge_mos"), LulisMosSensor(c, "discharge_mos")])
