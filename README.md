@@ -68,6 +68,12 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 
 *Left: label of the tested pack. Right: the official LULIS BATTERY app showing the same BMS (`LK8625-…`, `LR359V13_N031x60A`).*
 
+<p align="center">
+  <img src="docs/images/bms_board.jpg" alt="BMS board inside the tested LULIS pack" width="560">
+</p>
+
+*The BMS board inside the tested pack: `LRJS359V13-24S60A`, 24S LiFePO4, common port, single-wire communication with Bluetooth (一线通带蓝牙). The sticker QR code / `A4C138…` is the BLE MAC address of the LK86xx module.*
+
 Other LULIS packs with an `LK86xx` module will most likely work. If yours does too (or doesn't), please [open an issue](https://github.com/Satrier/lulis-bms-ha/issues/new/choose).
 
 ## Why can't I switch charging / discharging?
