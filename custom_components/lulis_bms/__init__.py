@@ -11,13 +11,14 @@ from homeassistant.helpers.storage import Store
 from .const import DOMAIN
 from .coordinator import LulisCoordinator
 
-PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.NUMBER, Platform.SENSOR]
 
 # (platform, old unique_id suffix, new suffix) for keys renamed in earlier versions
 _RENAMED_KEYS = (("sensor", "temp_3", "temp_mos"),)
 # entities removed in later versions: (platform, unique_id suffix)
 # 0.3.0: MOS switches dropped, the BMS acknowledges but ignores 0x3C on LULIS packs
-_REMOVED_KEYS = (("switch", "charge_mos"), ("switch", "discharge_mos"))
+# 0.5.0: the "asleep" binary sensor became the three-state "sleep_state" sensor
+_REMOVED_KEYS = (("switch", "charge_mos"), ("switch", "discharge_mos"), ("binary_sensor", "asleep"))
 # entities that used to be disabled by default and are now needed: (platform, suffix)
 # 0.3.1: the restart button is what wakes a sleeping pack
 # 0.4.0: sleep works (by leaving the BMS alone) and is a main control

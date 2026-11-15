@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- **Sleep is confirmed**: *Sleep BMS* no longer drops an open link. HA keeps polling over it, without reconnecting, until the BMS turns the discharge MOS off (output ~37 V), then disconnects. Without a link it stops polling right away.
+- New **Sleep** sensor: *Awake (output on)* / *Falling asleep* / *Asleep (output off)*. It replaces the *Asleep* binary sensor from 0.4.0, which is removed automatically.
+- New **Auto sleep after** number (minutes, 0 = off): presses *Sleep BMS* that long after a wake or a restart.
+- The ignored sleep command is no longer sent.
+
 ## 0.4.0
 
 - **Sleep / wake that actually work.** Tests on a LULIS pack showed that the BMS ignores the sleep command but wakes up on every new Bluetooth connection, and falls asleep by itself a few minutes later. So:

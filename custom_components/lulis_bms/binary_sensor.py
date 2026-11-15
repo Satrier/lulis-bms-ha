@@ -1,4 +1,4 @@
-"""Binary sensors for LULIS BMS: problem, MOS states (read-only) and sleep."""
+"""Binary sensors for LULIS BMS: problem and MOS states (read-only)."""
 
 from __future__ import annotations
 
@@ -53,23 +53,6 @@ class LulisMosSensor(LulisEntity, BinarySensorEntity):
         return (self.coordinator.data or {}).get(self._key)
 
 
-class LulisAsleepSensor(LulisEntity, BinarySensorEntity):
-    """On while HA leaves the pack alone so it can sleep (after Sleep, until Wake)."""
-
-    _attr_translation_key = "asleep"
-
-    def __init__(self, coordinator: LulisCoordinator) -> None:
-        super().__init__(coordinator, "asleep")
-
-    @property
-    def available(self) -> bool:
-        return True
-
-    @property
-    def is_on(self) -> bool:
-        return self.coordinator.asleep
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: LulisConfigEntry,
@@ -81,6 +64,5 @@ async def async_setup_entry(
             LulisProblemSensor(c),
             LulisMosSensor(c, "charge_mos"),
             LulisMosSensor(c, "discharge_mos"),
-            LulisAsleepSensor(c),
         ]
     )

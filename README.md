@@ -46,7 +46,7 @@ Download `lulis_bms.zip` from the [latest release](https://github.com/Satrier/lu
 - 🌡️ **Temperatures**: T1, T2 and MOS
 - ⚡ **Energy dashboard**: *Energy charged* / *Energy discharged* in kWh, kept across restarts
 - 🔌 **MOS state**: *Charge MOS* / *Discharge MOS* (read-only, see [below](#why-cant-i-switch-charging--discharging))
-- 💤 **Sleep / wake**: *Wake BMS* and *Sleep BMS* buttons, an *Asleep* sensor, and *Restart BMS* (MCU reset), see [Sleep and wake](#sleep-and-wake)
+- 💤 **Sleep / wake**: *Wake BMS* and *Sleep BMS* buttons, a *Sleep* state sensor, an *Auto sleep after* timer and *Restart BMS* (MCU reset), see [Sleep and wake](#sleep-and-wake)
 - 🚨 **Alarms**: *Alarm* and *Protection* sensors with the exact BMS reason (cell overvoltage, overheating, short circuit, …), plus a *Problem* binary sensor for automations
 - 🩺 **Health**: state of health, cycles, design capacity, raw status flags
 - 🧾 **Diagnostics** download with raw BMS frames and the protection thresholds (read-only)
@@ -78,13 +78,23 @@ So since 0.3.0 the MOS states are shown **read-only**. If the official app *can*
 
 ## Sleep and wake
 
-The tested BMS (`LR359V13_N031x60A`) turns its output off by itself (discharge MOS off, about 37 V on the terminals) roughly **6 minutes** after a Bluetooth connection is opened while no current flows. **Every new BLE connection wakes it**: the discharge MOS turns back on about 3 seconds after connecting. The sleep slot of the control command (`0x3C`) is acknowledged but ignored.
+On the tested BMS (`LR359V13_N031x60A`) the output has two levels:
 
-So the integration works with that behaviour:
+| State | Discharge MOS | Output terminals |
+|---|---|---|
+| awake | on | 79–80 V (pack voltage) |
+| asleep | off | about 37 V |
 
-- **Sleep BMS** sends the sleep command anyway, drops the Bluetooth link and **stops polling**. The pack falls asleep a few minutes later. The *Asleep* sensor turns on, the other entities show *Unavailable*, and the state survives a Home Assistant restart.
-- **Wake BMS** opens a fresh connection (which wakes the pack), waits a few seconds and resumes polling.
-- **Restart BMS** resets the BMS MCU. Use it if *Wake* doesn't help.
+The *Voltage* sensor is the pack voltage and stays at ~80 V either way; the *Discharge MOS* sensor tells the two apart.
+
+The BMS falls asleep **by itself about 6–7 minutes after a Bluetooth connection is opened** while no current flows, even if the connection stays open. **Every new connection wakes it** about 3 seconds later. The sleep slot of the control command (`0x3C`) is acknowledged but ignored. The integration works with that:
+
+- **Sleep BMS**: HA stops opening new connections. If the link is open, HA keeps polling over it and the *Sleep* sensor shows *Falling asleep* until the discharge MOS turns off, then disconnects (*Asleep (output off)*). Without a link it stops right away and the pack falls asleep a few minutes later. While asleep the other entities are *Unavailable*, and the state survives a Home Assistant restart.
+- **Wake BMS**: opens a fresh connection (which wakes the pack), waits a few seconds and resumes polling.
+- **Auto sleep after** (minutes, 0 = off): presses *Sleep BMS* automatically that long after a wake, a restart of Home Assistant, or a change of the value.
+- **Restart BMS**: resets the BMS MCU. Use it if *Wake* doesn't help.
+
+The phone app wakes the pack too: every connection does.
 
 ## Options
 

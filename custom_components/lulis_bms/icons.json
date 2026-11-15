@@ -53,6 +53,14 @@
         "state": {
           "ok": "mdi:shield-check"
         }
+      },
+      "sleep_state": {
+        "default": "mdi:sleep",
+        "state": {
+          "awake": "mdi:power",
+          "falling_asleep": "mdi:sleep",
+          "asleep": "mdi:power-sleep"
+        }
       }
     },
     "binary_sensor": {
@@ -73,12 +81,11 @@
         "state": {
           "off": "mdi:battery-off-outline"
         }
-      },
-      "asleep": {
-        "default": "mdi:sleep",
-        "state": {
-          "off": "mdi:sleep-off"
-        }
+      }
+    },
+    "number": {
+      "auto_sleep": {
+        "default": "mdi:timer-sand"
       }
     }
   }

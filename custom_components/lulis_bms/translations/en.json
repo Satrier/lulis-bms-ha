@@ -128,6 +128,14 @@
           "low_voltage_charge_lock": "Low voltage, charging prohibited",
           "short_circuit": "Short circuit protection"
         }
+      },
+      "sleep_state": {
+        "name": "Sleep",
+        "state": {
+          "awake": "Awake (output on)",
+          "falling_asleep": "Falling asleep",
+          "asleep": "Asleep (output off)"
+        }
       }
     },
     "binary_sensor": {
@@ -139,9 +147,6 @@
       },
       "discharge_mos": {
         "name": "Discharge MOS"
-      },
-      "asleep": {
-        "name": "Asleep"
       }
     },
     "button": {
@@ -153,6 +158,11 @@
       },
       "restart": {
         "name": "Restart BMS"
+      }
+    },
+    "number": {
+      "auto_sleep": {
+        "name": "Auto sleep after"
       }
     }
   },

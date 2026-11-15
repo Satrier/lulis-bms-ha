@@ -57,10 +57,11 @@ class LulisWakeButton(LulisEntity, ButtonEntity):
 
 
 class LulisSleepButton(LulisEntity, ButtonEntity):
-    """Lets the pack fall asleep: HA disconnects and stops polling until Wake.
+    """Lets the pack fall asleep: no new connections until Wake.
 
-    The BMS ignores the sleep command itself; it turns its output off a few
-    minutes after the last BLE connection, and any reconnect wakes it again.
+    The BMS ignores the sleep command; it turns its output off (~37 V) by itself a
+    few minutes after a connection was opened, and any new connection wakes it.
+    HA keeps polling over the open link until the discharge MOS is off.
     """
 
     _attr_translation_key = "sleep"

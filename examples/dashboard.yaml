@@ -29,7 +29,9 @@ sections:
       - type: tile
         entity: binary_sensor.lulis_battery_discharge_mos
       - type: tile
-        entity: binary_sensor.lulis_battery_asleep
+        entity: sensor.lulis_battery_sleep
+      - type: tile
+        entity: number.lulis_battery_auto_sleep_after
       - type: tile
         entity: button.lulis_battery_wake_bms
         tap_action:

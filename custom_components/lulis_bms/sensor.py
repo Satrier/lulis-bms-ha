@@ -27,6 +27,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import LulisConfigEntry
+from .const import SLEEP_STATES
 from .coordinator import LulisCoordinator
 from .entity import LulisEntity
 from .protocol import ALARM_STATES, PROTECTION_STATES
@@ -235,6 +236,25 @@ class LulisEnergySensor(LulisEntity, RestoreSensor):
         super()._handle_coordinator_update()
 
 
+class LulisSleepStateSensor(LulisEntity, SensorEntity):
+    """awake / falling_asleep / asleep (asleep = discharge MOS off, ~37 V on the output)."""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_translation_key = "sleep_state"
+
+    def __init__(self, coordinator: LulisCoordinator) -> None:
+        super().__init__(coordinator, "sleep_state")
+        self._attr_options = list(SLEEP_STATES)
+
+    @property
+    def available(self) -> bool:
+        return True
+
+    @property
+    def native_value(self) -> str:
+        return self.coordinator.sleep_state
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: LulisConfigEntry,
@@ -267,4 +287,5 @@ async def async_setup_entry(
     # BMS convention: positive current = charging (option "invert current" flips it)
     entities.append(LulisEnergySensor(coordinator, "energy_charged", +1))
     entities.append(LulisEnergySensor(coordinator, "energy_discharged", -1))
+    entities.append(LulisSleepStateSensor(coordinator))
     async_add_entities(entities)
